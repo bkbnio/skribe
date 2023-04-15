@@ -1,0 +1,18 @@
+complexity:
+  TooManyFunctions:
+    active: false
+  LongParameterList:
+    active: true
+    functionThreshold: 10
+formatting:
+  ParameterListWrapping:
+    active: false
+  Indentation:
+    indentSize: 2
+style:
+  MaxLineLength:
+    excludes: ['**/test/**/*', '**/testIntegration/**/*']
+    active: true
+    maxLineLength: 120
+  UnnecessaryAbstractClass:
+    active: false
