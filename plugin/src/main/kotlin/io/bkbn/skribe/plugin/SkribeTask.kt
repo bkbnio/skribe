@@ -30,7 +30,7 @@ abstract class SkribeTask : DefaultTask() {
     val result = response.body?.string() ?: error("No response body")
     val json = Json { ignoreUnknownKeys = true }
     val spec = json.decodeFromString(OpenApi.serializer(), result)
-//    val fileSpecs = ApiClientGenerator.generate(spec)
-//    fileSpecs.forEach { it.writeTo(Path.of(outputDir.get())) }
+    val fileSpecs = ApiClientGenerator.generate(spec)
+    fileSpecs.forEach { it.writeTo(Path.of(outputDir.get())) }
   }
 }
