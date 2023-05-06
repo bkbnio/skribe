@@ -8,7 +8,7 @@ plugins {
 
 dependencies {
   // Versions
-  val spektVersion = "0.1.1"
+  val spektVersion = "0.1.2"
   val ktorVersion = "2.3.0"
   val okHttpVersion = "4.11.0"
   val kotlinxSerializationVersion = "1.5.0"
@@ -22,6 +22,22 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
+
+testing {
+  suites {
+    named("test", JvmTestSuite::class) {
+      useJUnitJupiter()
+      dependencies {
+        val kotestVersion = "5.6.0"
+        implementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
+        implementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+
+        implementation(gradleTestKit())
+      }
+    }
+  }
+}
+
 
 gradlePlugin {
   website.set("https://github.com/bkbnio")
