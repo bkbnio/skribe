@@ -24,6 +24,8 @@ dependencies {
 }
 
 gradlePlugin {
+  website.set("https://github.com/bkbnio")
+  vcsUrl.set("https://github.com/bkbnio/skribe")
   plugins {
     create("Skribe") {
       id = "io.bkbn.skribe"
