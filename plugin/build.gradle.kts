@@ -8,8 +8,10 @@ plugins {
 
 dependencies {
   // Versions
-  val spektVersion = "0.1.0-SNAPSHOT"
+  val spektVersion = "0.1.1"
   val ktorVersion = "2.3.0"
+  val okHttpVersion = "4.11.0"
+  val kotlinxSerializationVersion = "1.5.0"
 
   // Dependencies
   implementation("io.bkbn:spekt-openapi-3-0:$spektVersion")
@@ -17,8 +19,8 @@ dependencies {
   implementation("io.bkbn:spekt-api-client-codegen:$spektVersion")
   implementation("io.ktor:ktor-client-core:$ktorVersion")
   implementation("io.ktor:ktor-client-cio:$ktorVersion")
-  implementation("com.squareup.okhttp3:okhttp:4.11.0")
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+  implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
 
 gradlePlugin {
