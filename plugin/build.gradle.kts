@@ -32,6 +32,7 @@ gradlePlugin {
       displayName = "Skribe API Client Generator"
       description = "Gradle plugin for generating rich API clients from a variety of spec formats"
       implementationClass = "io.bkbn.skribe.plugin.SkribePlugin"
+      tags.set(listOf("openapi", "codegen", "ktor"))
     }
   }
 }
