@@ -9,6 +9,7 @@ class SkribePlugin : Plugin<Project> {
     target.tasks.register("skribeGenerate", SkribeTask::class.java) {
       it.specUrl.set(ext.specUrl)
       it.outputDir.set(ext.outputDir)
+      it.basePackage.set(ext.basePackage)
     }
   }
 }

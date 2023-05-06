@@ -21,6 +21,9 @@ abstract class SkribeTask : DefaultTask() {
   @get:Input
   abstract val outputDir: Property<String>
 
+  @get:Input
+  abstract val basePackage: Property<String>
+
   @TaskAction
   fun greet() {
     val request = Request.Builder()
@@ -30,7 +33,7 @@ abstract class SkribeTask : DefaultTask() {
     val result = response.body?.string() ?: error("No response body")
     val json = Json { ignoreUnknownKeys = true }
     val spec = json.decodeFromString(OpenApi.serializer(), result)
-    val fileSpecs = ApiClientGenerator.generate(spec)
+    val fileSpecs = ApiClientGenerator.generate(spec, basePackage.get())
     fileSpecs.forEach { it.writeTo(Path.of(outputDir.get())) }
   }
 }
