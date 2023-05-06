@@ -1,9 +1,6 @@
-rootProject.name = "sourdough-gradle"
+rootProject.name = "skribe"
 
-include("root")
-include("application-jvm")
-include("library-jvm")
-include("library-mpp")
+include("plugin")
 
 // Set Project Gradle Names
 run {

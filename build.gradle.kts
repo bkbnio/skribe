@@ -3,7 +3,7 @@ plugins {
   id("io.gitlab.arturbosch.detekt") version "1.22.0"
 }
 
-allprojects {
+subprojects {
   group = "io.bkbn"
   version = run {
     val baseVersion =
