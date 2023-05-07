@@ -8,13 +8,11 @@ plugins {
 
 dependencies {
   // Versions
-  val spektVersion = "0.1.2"
-  val okHttpVersion = "4.11.0"
-  val kotlinxSerializationVersion = "1.5.0"
+  val okHttpVersion: String by project
+  val kotlinxSerializationVersion: String by project
 
   // Dependencies
   implementation(projects.skribeCodegen)
-  implementation("io.bkbn:spekt-api-client-codegen:$spektVersion")
   implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }

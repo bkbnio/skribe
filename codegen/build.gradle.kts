@@ -13,12 +13,11 @@ plugins {
 dependencies {
   // Versions
   val detektVersion: String by project
-  val spektVersion = "0.1.2"
+  val spektVersion: String by project
 
   // Spekt
   api("io.bkbn:spekt-openapi-3-0:$spektVersion")
   api("io.bkbn:spekt-swagger-2-0:$spektVersion")
-  api("io.bkbn:spekt-api-client-codegen:$spektVersion")
 
   api("com.squareup:kotlinpoet:1.13.1")
 
