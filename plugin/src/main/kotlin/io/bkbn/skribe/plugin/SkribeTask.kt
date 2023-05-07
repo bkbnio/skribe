@@ -1,6 +1,6 @@
 package io.bkbn.skribe.plugin
 
-import io.bkbn.spekt.api.client.codegen.ApiClientGenerator
+import io.bkbn.skribe.codegen.ApiClientGenerator
 import io.bkbn.spekt.openapi_3_0.OpenApi
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
