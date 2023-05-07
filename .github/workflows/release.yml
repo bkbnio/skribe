@@ -21,7 +21,7 @@ jobs:
         uses: burrunan/gradle-cache-action@v1
         with:
           gradle-version: wrapper
-          arguments: :skribe-codegen:publishToSonatype :skribe-codegen:closeAndReleaseSonatypeStagingRepository
+          arguments: :skribe-codegen:publishToSonatype closeAndReleaseSonatypeStagingRepository
           properties: |
             release=true
         env:
