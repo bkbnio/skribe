@@ -15,15 +15,13 @@ plugins {
   id("com.adarshr.test-logger") version "3.2.0" apply false
 }
 
-allprojects {
+subprojects {
   group = "io.bkbn"
 
   version = run {
     val baseVersion =
       project.findProperty("project.version") ?: error("project.version needs to be set in gradle.properties")
-    val isRelease = (project.findProperty("release") as? String)?.toBoolean()
-      ?: (project.findProperty("releasePlugin") as? String)?.toBoolean()
-    when (isRelease) {
+    when ((project.findProperty("release") as? String)?.toBoolean()) {
       true -> baseVersion
       else -> "$baseVersion-SNAPSHOT"
     }
