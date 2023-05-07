@@ -10,6 +10,7 @@ class SkribePlugin : Plugin<Project> {
       it.specUrl.set(ext.specUrl)
       it.outputDir.set(ext.outputDir)
       it.basePackage.set(ext.basePackage)
+      it.shouldCleanDir.set(ext.shouldCleanDir)
     }
   }
 }

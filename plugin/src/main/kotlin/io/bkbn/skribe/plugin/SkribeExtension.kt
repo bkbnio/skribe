@@ -6,4 +6,5 @@ interface SkribeExtension {
   val specUrl: Property<String>
   val basePackage: Property<String>
   val outputDir: Property<String>
+  val shouldCleanDir: Property<Boolean>
 }

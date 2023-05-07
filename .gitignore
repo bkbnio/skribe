@@ -6,3 +6,6 @@ build
 
 # IDE
 .idea
+
+# Codegen Playground
+playground/src/main/gen
