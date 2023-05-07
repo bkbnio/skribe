@@ -27,7 +27,7 @@ jobs:
           gradle-version: wrapper
           arguments: publishPlugins
           properties: |
-            release=true
+            releasePlugin=true
             gradle.publish.key=$GRADLE_PUBLISH_KEY
             gradle.publish.secret=$GRADLE_PUBLISH_SECRET
             org.gradle.vfs.watch=false

@@ -21,7 +21,9 @@ subprojects {
   version = run {
     val baseVersion =
       project.findProperty("project.version") ?: error("project.version needs to be set in gradle.properties")
-    when ((project.findProperty("release") as? String)?.toBoolean()) {
+    val isRelease = (project.findProperty("release") as? String)?.toBoolean()
+      ?: (project.findProperty("releasePlugin") as? String)?.toBoolean()
+    when (isRelease) {
       true -> baseVersion
       else -> "$baseVersion-SNAPSHOT"
     }
