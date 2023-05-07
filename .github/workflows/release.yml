@@ -4,6 +4,9 @@ on:
     types:
       - prereleased
       - released
+env:
+  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SONATYPE_SIGNING_KEY }}
+  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
 jobs:
   publish-to-gradle:
     runs-on: ubuntu-latest
@@ -28,3 +31,5 @@ jobs:
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USER }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
