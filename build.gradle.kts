@@ -15,7 +15,7 @@ plugins {
   id("com.adarshr.test-logger") version "3.2.0" apply false
 }
 
-subprojects {
+allprojects {
   group = "io.bkbn"
 
   version = run {
