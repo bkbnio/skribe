@@ -36,7 +36,7 @@ subprojects {
   plugins.withType(io.bkbn.sourdough.gradle.library.jvm.LibraryJvmPlugin::class) {
     extensions.configure(io.bkbn.sourdough.gradle.library.jvm.LibraryJvmExtension::class) {
       githubOrg.set("bkbnio")
-      githubRepo.set("spekt")
+      githubRepo.set("skribe")
       licenseName.set("MIT License")
       licenseUrl.set("https://mit-license.org")
       developerId.set("unredundant")

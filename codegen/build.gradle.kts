@@ -28,7 +28,7 @@ dependencies {
 }
 
 sourdoughLibrary {
-  libraryName.set("Spekt API Client Codegen")
+  libraryName.set("Skribe Codegen")
   libraryDescription.set("Generates KotlinPoet Manifests for creating HTTP Clients from a Spekt API Spec")
 }
 
