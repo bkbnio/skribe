@@ -32,12 +32,12 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
 
-class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
+class RequestGenerator(
+  override val basePackage: String,
+  override val openApi: OpenAPI
+) : Generator {
 
-  private val requestPackage = "$basePackage.requests"
-  private val modelPackage = "$basePackage.models"
-
-  fun generate(): Map<String, FileSpec> = spec.paths.mapValues { (path, pathItem) -> pathItem.createRequestFiles(path) }
+  fun generate(): Map<String, FileSpec> = openApi.paths.mapValues { (path, pathItem) -> pathItem.createRequestFiles(path) }
     .values.flatMap { it.entries }
     .associate { it.key to it.value }
 
@@ -66,11 +66,14 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
       description?.let { addKdoc(it) }
-      val responseTypes = this@createRequestFunction.collectPossibleResponseTypes().joinToString(separator = "\n") { "\t-${it}" }
-      addKdoc("""
+      val responseTypes =
+        this@createRequestFunction.collectPossibleResponseTypes().joinToString(separator = "\n") { "\t-${it}" }
+      addKdoc(
+        """
         Body can be one of the following types:
         $responseTypes
-      """.trimIndent())
+      """.trimIndent()
+      )
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = when (method) {
         HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
@@ -158,6 +161,7 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
           else -> error("Unknown response type: $response")
         }
       }
+
       else -> error("Unknown response type: $response")
     }
   }

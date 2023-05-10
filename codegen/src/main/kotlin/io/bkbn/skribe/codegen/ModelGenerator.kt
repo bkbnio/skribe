@@ -1,8 +1,18 @@
 package io.bkbn.skribe.codegen
 
 import com.benasher44.uuid.Uuid
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeAliasSpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asTypeName
 import io.bkbn.skribe.codegen.Util.capitalized
 import io.bkbn.skribe.codegen.Util.enumConstants
 import io.bkbn.skribe.codegen.Util.getRefKey
@@ -23,16 +33,12 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
 import kotlinx.serialization.Serializable
-import java.util.Locale
 
-class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
-
-  private val modelPackage = "$basePackage.models"
-  private val utilPackage = "$basePackage.util"
+class ModelGenerator(override val basePackage: String, override val openApi: OpenAPI) : Generator {
   fun generate(): Map<String, FileSpec> {
-    return spec.generateComponentSchemaModels() +
-      spec.generateComponentResponseModels() +
-      spec.generateComponentRequestBodyModels()
+    return openApi.generateComponentSchemaModels() +
+      openApi.generateComponentResponseModels() +
+      openApi.generateComponentRequestBodyModels()
   }
 
   private fun OpenAPI.generateComponentSchemaModels(): Map<String, FileSpec> {
@@ -130,7 +136,7 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
 
   private fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
     require(allOf.all { it.`$ref` != null }) { "Currently, all members of allOf must be references" }
-    val refs = allOf.map { spec.components.schemas[it.`$ref`.getRefKey()] }
+    val refs = allOf.map { openApi.components.schemas[it.`$ref`.getRefKey()] }
     require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas" }
     val objectRefs = refs.map { it as ObjectSchema }
     val gigaSchema = ObjectSchema()
