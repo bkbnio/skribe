@@ -2,6 +2,7 @@ package io.bkbn.skribe.codegen
 
 import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -54,10 +55,14 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
     FunSpec.builder(operationId).apply {
       var mutablePath = path
       val allParams = (this@createRequestFunction.parameters ?: emptyList()) + (pathItem.parameters ?: emptyList())
-      allParams.filter { it.`in` == "path" }.forEach { param ->
+      val queryParams = allParams.filter { it.`in` == "query" }
+      val pathParams = allParams.filter { it.`in` == "path" }
+
+      pathParams.forEach { param ->
         mutablePath =
-          replacePathParameter(mutablePath, param.name, param.name.sanitizePropertyName().snakeToCamel())
+          replacePathParameter(mutablePath, param.name, param.name.formattedParamName())
       }
+
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
       description?.let { addKdoc(it) }
@@ -73,7 +78,7 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
         HttpMethod.TRACE -> MemberName("io.ktor.client.request", "trace")
       }
       beginControlFlow("return %M(%P)", ktorMember, mutablePath)
-      addStatement("// TODO")
+      if (queryParams.isNotEmpty()) attachQueryParameters(queryParams)
       endControlFlow()
     }.build()
 
@@ -105,11 +110,25 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
       val parameterSchema = parameter.schema
       addParameter(
         ParameterSpec.builder(
-          parameter.name.sanitizePropertyName().snakeToCamel(),
+          parameter.name.formattedParamName(),
           parameterSchema.toKotlinTypeName().copy(nullable = parameter.required.not())
         ).build()
       )
     }
+  }
+
+  private fun FunSpec.Builder.attachQueryParameters(parameters: List<Parameter>) {
+    addCode(CodeBlock.builder().apply {
+      beginControlFlow("url")
+      parameters.forEach { param ->
+        if (param.required) {
+          addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
+        } else {
+          addStatement("%L?.let { parameters.append(%S, it.toString()) }", param.name.formattedParamName(), param.name)
+        }
+      }
+      endControlFlow()
+    }.build())
   }
 
   private fun replacePathParameter(path: String, key: String, replacement: String): String {
@@ -118,4 +137,6 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
       "$$replacement"
     }
   }
+
+  private fun String.formattedParamName(): String = this.sanitizePropertyName().snakeToCamel()
 }
