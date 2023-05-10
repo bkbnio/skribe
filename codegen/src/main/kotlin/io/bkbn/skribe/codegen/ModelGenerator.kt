@@ -185,9 +185,7 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
   private val uuidSerializerClassName: ClassName
     get() = ClassName(utilPackage, "UuidSerializer")
 
-  private fun String.isSnake() = matches(Regex("^[a-z]+(_[a-z]+)+$"))
-
-  private fun String.isCamel() = matches(Regex("^[a-z]+(?:[A-Z][a-z]*)*$"))
+  private fun String.isSnake() = matches(Regex("^[a-z]+(_[a-z0-9]+)+$"))
 
   private fun String.snakeToCamel() = split("_").mapIndexed { index, word ->
     if (index == 0) word else word.capitalized()
