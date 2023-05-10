@@ -11,12 +11,6 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
-import io.bkbn.skribe.codegen.Util.capitalized
-import io.bkbn.skribe.codegen.Util.enumConstants
-import io.bkbn.skribe.codegen.Util.getRefKey
-import io.bkbn.skribe.codegen.Util.isReferenceSchema
-import io.bkbn.skribe.codegen.Util.sanitizePropertyName
-import io.bkbn.skribe.codegen.Util.snakeToCamel
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.OpenAPI

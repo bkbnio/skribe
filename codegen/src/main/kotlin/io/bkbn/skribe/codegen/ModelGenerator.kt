@@ -13,14 +13,6 @@ import com.squareup.kotlinpoet.TypeAliasSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
-import io.bkbn.skribe.codegen.Util.capitalized
-import io.bkbn.skribe.codegen.Util.enumConstants
-import io.bkbn.skribe.codegen.Util.getRefKey
-import io.bkbn.skribe.codegen.Util.isReferenceSchema
-import io.bkbn.skribe.codegen.Util.isSnake
-import io.bkbn.skribe.codegen.Util.sanitizeEnumConstant
-import io.bkbn.skribe.codegen.Util.sanitizePropertyName
-import io.bkbn.skribe.codegen.Util.snakeToCamel
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
