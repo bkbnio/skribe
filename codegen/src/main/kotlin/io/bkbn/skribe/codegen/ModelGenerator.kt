@@ -17,11 +17,11 @@ import io.swagger.v3.oas.models.media.UUIDSchema
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
-class ModelGenerator(basePackage: String) {
+class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
 
   private val modelPackage = "$basePackage.models"
   private val utilPackage = "$basePackage.util"
-  fun generate(spec: OpenAPI): Map<String, FileSpec> {
+  fun generate(): Map<String, FileSpec> {
     return spec.generateComponentSchemaModels() +
       spec.generateComponentResponseModels() +
       spec.generateComponentRequestBodyModels()
@@ -62,6 +62,11 @@ class ModelGenerator(basePackage: String) {
   }
 
   private fun Schema<*>.toKotlinTypeSpec(name: String, parentType: ClassName? = null): TypeSpec {
+    if (propertiesOrEmpty.isEmpty()) {
+      return TypeSpec.objectBuilder(name).apply {
+        addAnnotation(Serializable::class)
+      }.build()
+    }
     val typeName = when (parentType) {
       null -> ClassName(modelPackage, name)
       else -> parentType.nestedClass(name)
@@ -107,9 +112,26 @@ class ModelGenerator(basePackage: String) {
   }
 
   private fun ComposedSchema.createComposedKotlinType(name: String): TypeSpec {
-    return TypeSpec.classBuilder(name).apply {
-      addAnnotation(Serializable::class)
-    }.build()
+    val unifiedSchema = toUnifiedSchema()
+    return unifiedSchema.toKotlinTypeSpec(name)
+  }
+
+  private fun ComposedSchema.toUnifiedSchema(): Schema<*> = when {
+    allOf != null -> unifyAllOfSchema()
+    anyOf != null -> TODO()
+    oneOf != null -> TODO()
+    else -> error("Unknown composed schema type: $this")
+  }
+
+  private fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
+    require(allOf.all { it.`$ref` != null }) { "Currently, all members of allOf must be references" }
+    val refs = allOf.map { spec.components.schemas[it.`$ref`.getRefKey()] }
+    require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas"}
+    val objectRefs = refs.map { it as ObjectSchema }
+    val gigaSchema = ObjectSchema()
+    objectRefs.forEach { it.propertiesOrEmpty.forEach { (name, schema) -> gigaSchema.addProperty(name, schema) } }
+    objectRefs.forEach { it.required?.forEach { propName -> gigaSchema.addRequiredItem(propName) } }
+    return gigaSchema
   }
 
   private fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName {
@@ -125,6 +147,7 @@ class ModelGenerator(basePackage: String) {
           else -> String::class.asTypeName()
         }
       }
+
       is BooleanSchema -> Boolean::class.asTypeName()
       is ObjectSchema -> {
         parentType.nestedClass(propertyName.capitalized())
@@ -132,7 +155,7 @@ class ModelGenerator(basePackage: String) {
 
       else -> {
         when {
-          isReferenceSchema() -> ClassName(modelPackage, `$ref`.split("/").last())
+          isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
           else -> error("Unknown schema type: $this")
         }
       }
@@ -170,9 +193,13 @@ class ModelGenerator(basePackage: String) {
     if (index == 0) word else word.capitalized()
   }.joinToString("")
 
-  private fun String.sanitizeEnumConstant(): String = trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
+  private fun String.sanitizeEnumConstant(): String =
+    trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
+
   private fun String.sanitizePropertyName(): String = trim().replace(Regex("\\s+"), "_").lowercase(Locale.getDefault())
 
   private val Schema<*>.enumConstants: List<String>
     get() = enum?.map { it.toString() } ?: emptyList()
+
+  private fun String.getRefKey() = split("/").last()
 }
