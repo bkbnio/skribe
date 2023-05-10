@@ -38,8 +38,15 @@ testing {
       useJUnitJupiter()
       dependencies {
         // Kotest
-        implementation("io.kotest:kotest-runner-junit5-jvm:5.5.4")
-        implementation("io.kotest:kotest-assertions-core-jvm:5.5.4")
+        val kotestVersion: String by project
+        val kotestCompileTestingAssertionsVersion: String by project
+        val kotlinxSerializationVersion: String by project
+        val kotlinCompileTestingVersion: String by project
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+        implementation("io.kotest:kotest-runner-junit5-jvm:${kotestVersion}")
+        implementation("io.kotest:kotest-assertions-core-jvm:${kotestVersion}")
+        implementation("io.kotest.extensions:kotest-assertions-compiler:${kotestCompileTestingAssertionsVersion}")
+        implementation("com.github.tschuchortdev:kotlin-compile-testing:${kotlinCompileTestingVersion}")
       }
     }
   }
