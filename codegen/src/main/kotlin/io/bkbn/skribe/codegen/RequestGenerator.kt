@@ -66,6 +66,11 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
       description?.let { addKdoc(it) }
+      val responseTypes = this@createRequestFunction.collectPossibleResponseTypes().joinToString(separator = "\n") { "\t-${it}" }
+      addKdoc("""
+        Body can be one of the following types:
+        $responseTypes
+      """.trimIndent())
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = when (method) {
         HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
@@ -139,4 +144,21 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
   }
 
   private fun String.formattedParamName(): String = this.sanitizePropertyName().snakeToCamel()
+
+  private fun Operation.collectPossibleResponseTypes(): List<TypeName> = responses.values.map { response ->
+    when {
+      response.`$ref` != null -> ClassName(modelPackage, response.`$ref`.getRefKey())
+      response.content != null -> {
+        val content = response.content
+        val contentType = content.keys.first()
+        val schema = content[contentType]?.schema
+        when {
+          schema?.`$ref` != null -> ClassName(modelPackage, schema.`$ref`.getRefKey())
+          schema != null -> schema.toKotlinTypeName()
+          else -> error("Unknown response type: $response")
+        }
+      }
+      else -> error("Unknown response type: $response")
+    }
+  }
 }
