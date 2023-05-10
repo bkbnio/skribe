@@ -3,6 +3,14 @@ package io.bkbn.skribe.codegen
 import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import io.bkbn.skribe.codegen.Util.capitalized
+import io.bkbn.skribe.codegen.Util.enumConstants
+import io.bkbn.skribe.codegen.Util.getRefKey
+import io.bkbn.skribe.codegen.Util.isReferenceSchema
+import io.bkbn.skribe.codegen.Util.isSnake
+import io.bkbn.skribe.codegen.Util.sanitizeEnumConstant
+import io.bkbn.skribe.codegen.Util.sanitizePropertyName
+import io.bkbn.skribe.codegen.Util.snakeToCamel
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
@@ -56,17 +64,14 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
           else -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build())
         }
       }
+
       is BooleanSchema -> addTypeAlias(TypeAliasSpec.builder(name, Boolean::class).build())
       else -> addType(schema.toKotlinTypeSpec(name))
     }
   }
 
   private fun Schema<*>.toKotlinTypeSpec(name: String, parentType: ClassName? = null): TypeSpec {
-    if (propertiesOrEmpty.isEmpty()) {
-      return TypeSpec.objectBuilder(name).apply {
-        addAnnotation(Serializable::class)
-      }.build()
-    }
+    if (propertiesOrEmpty.isEmpty()) return emptyObjectType(name)
     val typeName = when (parentType) {
       null -> ClassName(modelPackage, name)
       else -> parentType.nestedClass(name)
@@ -126,7 +131,7 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
   private fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
     require(allOf.all { it.`$ref` != null }) { "Currently, all members of allOf must be references" }
     val refs = allOf.map { spec.components.schemas[it.`$ref`.getRefKey()] }
-    require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas"}
+    require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas" }
     val objectRefs = refs.map { it as ObjectSchema }
     val gigaSchema = ObjectSchema()
     objectRefs.forEach { it.propertiesOrEmpty.forEach { (name, schema) -> gigaSchema.addProperty(name, schema) } }
@@ -134,35 +139,31 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
     return gigaSchema
   }
 
-  private fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName {
-    return when (this) {
-      is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
-      is UUIDSchema -> Uuid::class.asTypeName()
-      is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
-      is IntegerSchema -> Int::class.asTypeName()
-      is NumberSchema -> Int::class.asTypeName()
-      is StringSchema -> {
-        when {
-          enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
-          else -> String::class.asTypeName()
-        }
+  private fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName = when (this) {
+    is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
+    is UUIDSchema -> Uuid::class.asTypeName()
+    is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
+    is IntegerSchema -> Int::class.asTypeName()
+    is NumberSchema -> Int::class.asTypeName()
+    is StringSchema -> {
+      when {
+        enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
+        else -> String::class.asTypeName()
       }
+    }
 
-      is BooleanSchema -> Boolean::class.asTypeName()
-      is ObjectSchema -> {
-        parentType.nestedClass(propertyName.capitalized())
-      }
+    is BooleanSchema -> Boolean::class.asTypeName()
+    is ObjectSchema -> {
+      parentType.nestedClass(propertyName.capitalized())
+    }
 
-      else -> {
-        when {
-          isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
-          else -> error("Unknown schema type: $this")
-        }
+    else -> {
+      when {
+        isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
+        else -> error("Unknown schema type: $this")
       }
     }
   }
-
-  private fun Schema<*>.isReferenceSchema(): Boolean = `$ref` != null
   private val Schema<*>.requiredProperties: List<String>
     get() = required ?: emptyList()
 
@@ -179,25 +180,6 @@ class ModelGenerator(private val spec: OpenAPI, basePackage: String) {
     addAnnotation(Serializable::class)
   }.build()
 
-  private fun String.capitalized() =
-    replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-
   private val uuidSerializerClassName: ClassName
     get() = ClassName(utilPackage, "UuidSerializer")
-
-  private fun String.isSnake() = matches(Regex("^[a-z]+(_[a-z0-9]+)+$"))
-
-  private fun String.snakeToCamel() = split("_").mapIndexed { index, word ->
-    if (index == 0) word else word.capitalized()
-  }.joinToString("")
-
-  private fun String.sanitizeEnumConstant(): String =
-    trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
-
-  private fun String.sanitizePropertyName(): String = trim().replace(Regex("\\s+"), "_").lowercase(Locale.getDefault())
-
-  private val Schema<*>.enumConstants: List<String>
-    get() = enum?.map { it.toString() } ?: emptyList()
-
-  private fun String.getRefKey() = split("/").last()
 }
