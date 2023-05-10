@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
+import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.DateTimeSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.NumberSchema
@@ -48,7 +49,13 @@ class ModelGenerator(basePackage: String) {
       is DateTimeSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build()) // Needs work
       is IntegerSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
       is NumberSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
-      is StringSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build()) // Needs work
+      is ComposedSchema -> addType(schema.createComposedKotlinType(name))
+      is StringSchema -> {
+        when {
+          schema.enumConstants.isNotEmpty() -> addType(schema.toEnumType(name))
+          else -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build())
+        }
+      }
       is BooleanSchema -> addTypeAlias(TypeAliasSpec.builder(name, Boolean::class).build())
       else -> addType(schema.toKotlinTypeSpec(name))
     }
@@ -92,6 +99,19 @@ class ModelGenerator(basePackage: String) {
     }.build()
   }
 
+  private fun Schema<*>.toEnumType(name: String): TypeSpec {
+    return TypeSpec.enumBuilder(name).apply {
+      addAnnotation(Serializable::class)
+      this@toEnumType.enumConstants.forEach { addEnumConstant(it.sanitizeEnumConstant()) }
+    }.build()
+  }
+
+  private fun ComposedSchema.createComposedKotlinType(name: String): TypeSpec {
+    return TypeSpec.classBuilder(name).apply {
+      addAnnotation(Serializable::class)
+    }.build()
+  }
+
   private fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName {
     return when (this) {
       is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
@@ -99,7 +119,12 @@ class ModelGenerator(basePackage: String) {
       is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
       is IntegerSchema -> Int::class.asTypeName()
       is NumberSchema -> Int::class.asTypeName()
-      is StringSchema -> String::class.asTypeName()
+      is StringSchema -> {
+        when {
+          enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
+          else -> String::class.asTypeName()
+        }
+      }
       is BooleanSchema -> Boolean::class.asTypeName()
       is ObjectSchema -> {
         parentType.nestedClass(propertyName.capitalized())
@@ -145,16 +170,9 @@ class ModelGenerator(basePackage: String) {
     if (index == 0) word else word.capitalized()
   }.joinToString("")
 
-  private fun String.toAngrySnake(): String {
-    require(isSnake() || isCamel()) { "The provided string is neither in snake_case nor camelCase." }
-    val snakeCaseValue = if (isCamel()) {
-      replace(Regex("([A-Z])"), "_$1").lowercase(Locale.getDefault())
-    } else {
-      this
-    }
-
-    return snakeCaseValue.uppercase(Locale.getDefault())
-  }
-
+  private fun String.sanitizeEnumConstant(): String = trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
   private fun String.sanitizePropertyName(): String = trim().replace(Regex("\\s+"), "_").lowercase(Locale.getDefault())
+
+  private val Schema<*>.enumConstants: List<String>
+    get() = enum?.map { it.toString() } ?: emptyList()
 }
