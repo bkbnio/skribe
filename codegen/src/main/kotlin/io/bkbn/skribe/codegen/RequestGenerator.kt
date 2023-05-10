@@ -15,6 +15,7 @@ import io.bkbn.skribe.codegen.Util.enumConstants
 import io.bkbn.skribe.codegen.Util.getRefKey
 import io.bkbn.skribe.codegen.Util.isReferenceSchema
 import io.bkbn.skribe.codegen.Util.sanitizePropertyName
+import io.bkbn.skribe.codegen.Util.snakeToCamel
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.OpenAPI
@@ -51,8 +52,15 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
+      var mutablePath = path
+      val allParams = (this@createRequestFunction.parameters ?: emptyList()) + (pathItem.parameters ?: emptyList())
+      allParams.filter { it.`in` == "path" }.forEach { param ->
+        mutablePath =
+          replacePathParameter(mutablePath, param.name, param.name.sanitizePropertyName().snakeToCamel())
+      }
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
+      description?.let { addKdoc(it) }
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = when (method) {
         HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
@@ -64,7 +72,7 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
         HttpMethod.OPTIONS -> MemberName("io.ktor.client.request", "options")
         HttpMethod.TRACE -> MemberName("io.ktor.client.request", "trace")
       }
-      beginControlFlow("return %M(%S)", ktorMember, path)
+      beginControlFlow("return %M(%P)", ktorMember, mutablePath)
       addStatement("// TODO")
       endControlFlow()
     }.build()
@@ -81,6 +89,7 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
         else -> String::class.asTypeName()
       }
     }
+
     is BooleanSchema -> Boolean::class.asTypeName()
     else -> {
       when {
@@ -95,8 +104,18 @@ class RequestGenerator(private val spec: OpenAPI, basePackage: String) {
     allParams.forEach { parameter ->
       val parameterSchema = parameter.schema
       addParameter(
-        ParameterSpec.builder(parameter.name.sanitizePropertyName(), parameterSchema.toKotlinTypeName().copy(nullable = parameter.required.not())).build()
+        ParameterSpec.builder(
+          parameter.name.sanitizePropertyName().snakeToCamel(),
+          parameterSchema.toKotlinTypeName().copy(nullable = parameter.required.not())
+        ).build()
       )
+    }
+  }
+
+  private fun replacePathParameter(path: String, key: String, replacement: String): String {
+    val pattern = "\\{$key}".toRegex()
+    return pattern.replace(path) {
+      "$$replacement"
     }
   }
 }
