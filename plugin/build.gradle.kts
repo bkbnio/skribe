@@ -1,7 +1,6 @@
 plugins {
   kotlin("jvm")
   kotlin("plugin.serialization")
-  id("io.gitlab.arturbosch.detekt")
   id("com.gradle.plugin-publish")
   id("java-gradle-plugin")
   id("maven-publish")
@@ -11,15 +10,11 @@ dependencies {
   // Versions
   val kotlinxSerializationVersion: String by project
   val kotlinPoetVersion: String by project
-  val detektVersion: String by project
 
   // Dependencies
   implementation(projects.skribeCodegen)
   implementation("com.squareup:kotlinpoet:${kotlinPoetVersion}")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
-
-  // Formatting
-  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
 }
 
 testing {
@@ -35,10 +30,6 @@ testing {
       }
     }
   }
-}
-
-detekt {
-  autoCorrect = true
 }
 
 gradlePlugin {
