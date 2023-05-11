@@ -8,9 +8,15 @@ plugins {
 }
 
 dependencies {
-  implementation("io.ktor:ktor-client-core:2.3.0")
-  implementation("io.ktor:ktor-client-cio:2.3.0")
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+  val ktorVersion: String by project
+  val kotlinxSerializationVersion: String by project
+  val uuidVersion: String by project
+
+  implementation(projects.skribeCodegen)
+  implementation("io.ktor:ktor-client-core:$ktorVersion")
+  implementation("io.ktor:ktor-client-cio:$ktorVersion")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+  implementation("com.benasher44:uuid:$uuidVersion")
 }
 
 sourceSets {

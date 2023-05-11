@@ -8,12 +8,12 @@ plugins {
 
 dependencies {
   // Versions
-  val okHttpVersion: String by project
   val kotlinxSerializationVersion: String by project
+  val kotlinPoetVersion: String by project
 
   // Dependencies
   implementation(projects.skribeCodegen)
-  implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
+  implementation("com.squareup:kotlinpoet:${kotlinPoetVersion}")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
 
@@ -31,7 +31,6 @@ testing {
     }
   }
 }
-
 
 gradlePlugin {
   website.set("https://github.com/bkbnio")

@@ -1,14 +1,14 @@
 package io.bkbn.skribe.codegen
 
 import com.squareup.kotlinpoet.FileSpec
-import io.bkbn.spekt.common.Spek
-import io.bkbn.spekt.openapi_3_0.OpenApi
-import io.bkbn.spekt.swagger_2_0.Swagger
+import io.swagger.parser.OpenAPIParser
 
 object ApiClientGenerator {
-  fun generate(spek: Spek, basePackage: String): List<FileSpec> = when (spek) {
-    is OpenApi -> OpenApiClientGenerator(basePackage).generate(spek)
-    is Swagger -> TODO()
-    else -> throw IllegalArgumentException("Unknown Spek type: ${spek::class.simpleName}")
+  fun generate(specUrl: String, basePackage: String): List<FileSpec> {
+    val spec = OpenAPIParser().readLocation(specUrl, null, null)
+    val models = ModelGenerator(basePackage, spec.openAPI).generate()
+    val requests = RequestGenerator(basePackage, spec.openAPI).generate()
+    val util = UtilGenerator(basePackage, spec.openAPI).generate()
+    return models.values + requests.values + util.values
   }
 }
