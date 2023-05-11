@@ -1,6 +1,5 @@
 package io.bkbn.skribe.codegen
 
-import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -8,42 +7,57 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.asTypeName
 import io.ktor.client.HttpClient
-import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
-import io.swagger.v3.oas.models.media.ArraySchema
-import io.swagger.v3.oas.models.media.BooleanSchema
-import io.swagger.v3.oas.models.media.DateTimeSchema
-import io.swagger.v3.oas.models.media.IntegerSchema
-import io.swagger.v3.oas.models.media.NumberSchema
-import io.swagger.v3.oas.models.media.Schema
-import io.swagger.v3.oas.models.media.StringSchema
-import io.swagger.v3.oas.models.media.UUIDSchema
+import io.swagger.v3.oas.models.media.ComposedSchema
+import io.swagger.v3.oas.models.media.ObjectSchema
+import io.swagger.v3.oas.models.parameters.Parameter
+import java.lang.StringBuilder
 
 class RequestGenerator(
   override val basePackage: String,
   override val openApi: OpenAPI
 ) : Generator {
 
-  fun generate(): Map<String, FileSpec> = openApi.paths.mapValues { (path, pathItem) -> pathItem.createRequestFiles(path) }
-    .values.flatMap { it.entries }
-    .associate { it.key to it.value }
+  fun generate(): Map<String, FileSpec> =
+    openApi.paths.mapValues { (path, pathItem) -> pathItem.createRequestFiles(path) + pathItem.createResponseFiles() }
+      .values.flatMap { it.entries }
+      .associate { it.key to it.value }
 
   private fun PathItem.createRequestFiles(path: String): Map<String, FileSpec> =
     readOperationsMap().entries.associate { (method, operation) ->
       operation.operationId to operation.createRequestFile(path, method, this)
     }
 
+  private fun PathItem.createResponseFiles(): Map<String, FileSpec> =
+    readOperationsMap().entries.associate { (_, operation) ->
+      "${operation.operationId}Response" to operation.createResponseFile()
+    }.filterValues { it != null }.mapValues { it.value!! }
+
   private fun Operation.createRequestFile(path: String, method: HttpMethod, pathItem: PathItem): FileSpec =
     FileSpec.builder(requestPackage, operationId.capitalized()).apply {
       addFunction(createRequestFunction(path, method, pathItem))
     }.build()
+
+  private fun Operation.createResponseFile(): FileSpec? {
+    val inlineResponseTypes = responses
+      .filterValues { it.content != null }
+      .values
+      .mapNotNull { response ->
+        val content = response.content
+        val contentType = content.keys.first()
+        content[contentType]?.schema
+      }
+      .filter { it.`$ref` == null }
+    if (inlineResponseTypes.isEmpty()) return null
+    return FileSpec.builder(modelPackage, operationId.capitalized()).apply {
+      inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+    }.build()
+  }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
@@ -61,13 +75,11 @@ class RequestGenerator(
       addModifiers(KModifier.SUSPEND)
       description?.let { addKdoc(it) }
       val responseTypes =
-        this@createRequestFunction.collectPossibleResponseTypes().joinToString(separator = "\n") { "\t-${it}" }
-      addKdoc(
-        """
-        Body can be one of the following types:
-        $responseTypes
-      """.trimIndent()
-      )
+        this@createRequestFunction.collectPossibleResponseTypes()
+      val responseBuilder = StringBuilder()
+      responseBuilder.append("Body can be one of the following types:\n")
+      responseTypes.forEach { responseBuilder.append("\t- [$it]\n") }
+      addKdoc(responseBuilder.toString())
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = when (method) {
         HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
@@ -84,28 +96,6 @@ class RequestGenerator(
       endControlFlow()
     }.build()
 
-  private fun Schema<*>.toKotlinTypeName(): TypeName = when (this) {
-    is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName())
-    is UUIDSchema -> Uuid::class.asTypeName()
-    is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
-    is IntegerSchema -> Int::class.asTypeName()
-    is NumberSchema -> Int::class.asTypeName()
-    is StringSchema -> {
-      when {
-        enumConstants.isNotEmpty() -> TODO()
-        else -> String::class.asTypeName()
-      }
-    }
-
-    is BooleanSchema -> Boolean::class.asTypeName()
-    else -> {
-      when {
-        isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
-        else -> error("Unknown schema type: $this")
-      }
-    }
-  }
-
   private fun FunSpec.Builder.attachParameters(operation: Operation, pathParameters: List<Parameter>) {
     val allParams = (operation.parameters ?: emptyList()) + pathParameters
     allParams.forEach { parameter ->
@@ -113,7 +103,7 @@ class RequestGenerator(
       addParameter(
         ParameterSpec.builder(
           parameter.name.formattedParamName(),
-          parameterSchema.toKotlinTypeName().copy(nullable = parameter.required.not())
+          parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.required.not())
         ).build()
       )
     }
@@ -151,7 +141,7 @@ class RequestGenerator(
         val schema = content[contentType]?.schema
         when {
           schema?.`$ref` != null -> ClassName(modelPackage, schema.`$ref`.getRefKey())
-          schema != null -> schema.toKotlinTypeName()
+          schema != null -> schema.toKotlinTypeName(operationId)
           else -> error("Unknown response type: $response")
         }
       }
