@@ -79,20 +79,22 @@ class RequestGenerator(
       description?.let { addKdoc(it) }
       addTypeHints(this@createRequestFunction)
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
-      val ktorMember = when (method) {
-        HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
-        HttpMethod.GET -> MemberName("io.ktor.client.request", "get")
-        HttpMethod.PUT -> MemberName("io.ktor.client.request", "put")
-        HttpMethod.PATCH -> MemberName("io.ktor.client.request", "patch")
-        HttpMethod.DELETE -> MemberName("io.ktor.client.request", "delete")
-        HttpMethod.HEAD -> MemberName("io.ktor.client.request", "head")
-        HttpMethod.OPTIONS -> MemberName("io.ktor.client.request", "options")
-        HttpMethod.TRACE -> MemberName("io.ktor.client.request", "trace")
-      }
+      val ktorMember = method.toKtorMemberName()
       beginControlFlow("return %M(%P)", ktorMember, mutablePath)
       if (queryParams.isNotEmpty()) attachQueryParameters(queryParams)
       endControlFlow()
     }.build()
+
+  private fun HttpMethod.toKtorMemberName() = when (this) {
+    HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
+    HttpMethod.GET -> MemberName("io.ktor.client.request", "get")
+    HttpMethod.PUT -> MemberName("io.ktor.client.request", "put")
+    HttpMethod.PATCH -> MemberName("io.ktor.client.request", "patch")
+    HttpMethod.DELETE -> MemberName("io.ktor.client.request", "delete")
+    HttpMethod.HEAD -> MemberName("io.ktor.client.request", "head")
+    HttpMethod.OPTIONS -> MemberName("io.ktor.client.request", "options")
+    HttpMethod.TRACE -> MemberName("io.ktor.client.request", "trace")
+  }
 
   private fun FunSpec.Builder.attachParameters(operation: Operation, pathParameters: List<Parameter>) {
     val allParams = (operation.parameters ?: emptyList()) + pathParameters
