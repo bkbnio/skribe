@@ -10,31 +10,31 @@ import java.nio.file.Path
 
 abstract class SkribeTask : DefaultTask() {
 
-    @get:Input
-    abstract val specUrl: Property<String>
+  @get:Input
+  abstract val specUrl: Property<String>
 
-    @get:Input
-    abstract val outputDir: Property<String>
+  @get:Input
+  abstract val outputDir: Property<String>
 
-    @get:Input
-    abstract val basePackage: Property<String>
+  @get:Input
+  abstract val basePackage: Property<String>
 
-    @get:Input
-    @get:Optional
-    abstract val shouldCleanDir: Property<Boolean?>
+  @get:Input
+  @get:Optional
+  abstract val shouldCleanDir: Property<Boolean?>
 
-    @TaskAction
-    fun generate() {
-        logger.quiet("Generating client from ${specUrl.get()} to ${outputDir.get()}")
-        val outputDirPath = Path.of(outputDir.get())
+  @TaskAction
+  fun generate() {
+    logger.quiet("Generating client from ${specUrl.get()} to ${outputDir.get()}")
+    val outputDirPath = Path.of(outputDir.get())
 
-        if (shouldCleanDir.orNull == true) {
-            logger.quiet("Cleaning directory recursively ${outputDir.get()}")
-            outputDirPath.toFile().deleteRecursively()
-        }
-
-        val fileSpecs = ApiClientGenerator.generate(specUrl.get(), basePackage.get())
-        logger.quiet("Writing files to ${outputDir.get()}")
-        fileSpecs.forEach { it.writeTo(outputDirPath) }
+    if (shouldCleanDir.orNull == true) {
+      logger.quiet("Cleaning directory recursively ${outputDir.get()}")
+      outputDirPath.toFile().deleteRecursively()
     }
+
+    val fileSpecs = ApiClientGenerator.generate(specUrl.get(), basePackage.get())
+    logger.quiet("Writing files to ${outputDir.get()}")
+    fileSpecs.forEach { it.writeTo(outputDirPath) }
+  }
 }
