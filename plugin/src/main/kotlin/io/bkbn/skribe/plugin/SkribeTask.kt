@@ -35,8 +35,6 @@ abstract class SkribeTask : DefaultTask() {
 
     val fileSpecs = ApiClientGenerator.generate(specUrl.get(), basePackage.get())
     logger.quiet("Writing files to ${outputDir.get()}")
-    fileSpecs.forEach {
-      it.writeTo(outputDirPath)
-    }
+    fileSpecs.forEach { it.writeTo(outputDirPath) }
   }
 }
