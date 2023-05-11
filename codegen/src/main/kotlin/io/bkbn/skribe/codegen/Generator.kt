@@ -24,6 +24,7 @@ import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
@@ -70,15 +71,23 @@ internal sealed interface Generator {
       primaryConstructor(
         FunSpec.constructorBuilder().apply {
           addParameters(
-            sanitizedProperties.map { (name, schema) ->
+            propertiesOrEmpty.map { (name, schema) ->
+              val formattedName = name.formatPropertyName()
               ParameterSpec.builder(
-                name,
+                formattedName,
                 schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
               ).apply {
                 if (schema is UUIDSchema) {
                   addAnnotation(
                     AnnotationSpec.builder(Serializable::class).apply {
                       addMember("%T::class", uuidSerializerClassName)
+                    }.build()
+                  )
+                }
+                if (formattedName != name) {
+                  addAnnotation(
+                    AnnotationSpec.builder(SerialName::class).apply {
+                      addMember("%S", name)
                     }.build()
                   )
                 }
@@ -89,21 +98,30 @@ internal sealed interface Generator {
       )
 
       addProperties(
-        sanitizedProperties.map { (name, schema) ->
+        propertiesOrEmpty.map { (name, schema) ->
+          val formattedName = name.formatPropertyName()
           PropertySpec.builder(
-            name,
-            schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
+            formattedName,
+            schema.toKotlinTypeName(formattedName, typeName).copy(nullable = name !in requiredProperties)
           )
             .apply {
-              initializer(name)
+              initializer(formattedName)
             }.build()
         }
       )
 
-      sanitizedProperties.filterValues { it is ObjectSchema }.forEach { (name, schema) ->
-        addType(schema.toKotlinTypeSpec(name = name.capitalized(), parentType = typeName))
+      propertiesOrEmpty.filterValues { it is ObjectSchema }.forEach { (name, schema) ->
+        val formattedName = name.formatPropertyName()
+        addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
       }
     }.build()
+  }
+
+  fun String.formatPropertyName(): String = sanitizePropertyName().let {
+    when {
+      it.isSnake() -> it.snakeToCamel()
+      else -> it
+    }
   }
 
   val Schema<*>.requiredProperties: List<String>
@@ -111,12 +129,6 @@ internal sealed interface Generator {
 
   val Schema<*>.propertiesOrEmpty: Map<String, Schema<*>>
     get() = properties ?: emptyMap()
-
-  val Schema<*>.sanitizedProperties: Map<String, Schema<*>>
-    get() = propertiesOrEmpty.mapKeys { (name, _) ->
-      val sanitized = name.sanitizePropertyName()
-      if (sanitized.isSnake()) sanitized.snakeToCamel() else sanitized
-    }
 
   fun emptyObjectType(name: String) = TypeSpec.objectBuilder(name).apply {
     addAnnotation(Serializable::class)
