@@ -15,7 +15,6 @@ import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
-import io.swagger.v3.oas.models.parameters.RequestBody
 import java.lang.StringBuilder
 
 class RequestGenerator(
@@ -121,28 +120,36 @@ class RequestGenerator(
   }
 
   private fun FunSpec.Builder.attachQueryParameters(parameters: List<Parameter>) {
-    addCode(CodeBlock.builder().apply {
-      beginControlFlow("url")
-      parameters.forEach { param ->
-        if (param.required) {
-          addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
-        } else {
-          addStatement("%L?.let { parameters.append(%S, it.toString()) }", param.name.formattedParamName(), param.name)
+    addCode(
+      CodeBlock.builder().apply {
+        beginControlFlow("url")
+        parameters.forEach { param ->
+          if (param.required) {
+            addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
+          } else {
+            addStatement(
+              "%L?.let { parameters.append(%S, it.toString()) }",
+              param.name.formattedParamName(),
+              param.name
+            )
+          }
         }
-      }
-      endControlFlow()
-    }.build())
+        endControlFlow()
+      }.build()
+    )
   }
 
   private fun FunSpec.Builder.attachRequestBody(nullable: Boolean) {
     val bodyMn = MemberName("io.ktor.client.request", "setBody")
-    addCode(CodeBlock.builder().apply {
-      if (nullable) {
-        addStatement("body?.let { %M(it) }", bodyMn)
-      } else {
-        addStatement("%M(body)", bodyMn)
-      }
-    }.build())
+    addCode(
+      CodeBlock.builder().apply {
+        if (nullable) {
+          addStatement("body?.let { %M(it) }", bodyMn)
+        } else {
+          addStatement("%M(body)", bodyMn)
+        }
+      }.build()
+    )
   }
 
   private fun replacePathParameter(path: String, key: String, replacement: String): String {

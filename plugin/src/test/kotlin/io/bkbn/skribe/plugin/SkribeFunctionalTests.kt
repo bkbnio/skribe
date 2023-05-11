@@ -1,14 +1,13 @@
 package io.bkbn.skribe.plugin
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.shouldBe
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.intellij.lang.annotations.Language
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
-import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class SkribeFunctionalTests : DescribeSpec({
   describe("Skribe functional tests") {
@@ -17,12 +16,15 @@ class SkribeFunctionalTests : DescribeSpec({
       val testProjectDir = createTempDirectory()
 
       val settingsFile = testProjectDir.resolve("settings.gradle.kts")
-      settingsFile.writeText("""
+      settingsFile.writeText(
+        """
         rootProject.name = "skribe-ft"
-      """.trimIndent())
+        """.trimIndent()
+      )
 
       val buildFile = testProjectDir.resolve("build.gradle.kts")
-      buildFile.writeKotlin("""
+      buildFile.writeKotlin(
+        """
         plugins {
           id("io.bkbn.skribe")
         }
@@ -32,7 +34,8 @@ class SkribeFunctionalTests : DescribeSpec({
           basePackage.set("io.bkbn.skribe.ft")
           outputDir.set("${'$'}{projectDir}/src/main/kotlin")
         }
-      """.trimIndent())
+        """.trimIndent()
+      )
 
       // act
       val result = GradleRunner.create().apply {

@@ -69,27 +69,36 @@ internal sealed interface Generator {
       addAnnotation(Serializable::class)
       primaryConstructor(
         FunSpec.constructorBuilder().apply {
-          addParameters(sanitizedProperties.map { (name, schema) ->
-            ParameterSpec.builder(
-              name,
-              schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
-            ).apply {
-              if (schema is UUIDSchema) {
-                addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-                  addMember("%T::class", uuidSerializerClassName)
-                }.build())
-              }
-            }.build()
-          })
+          addParameters(
+            sanitizedProperties.map { (name, schema) ->
+              ParameterSpec.builder(
+                name,
+                schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
+              ).apply {
+                if (schema is UUIDSchema) {
+                  addAnnotation(
+                    AnnotationSpec.builder(Serializable::class).apply {
+                      addMember("%T::class", uuidSerializerClassName)
+                    }.build()
+                  )
+                }
+              }.build()
+            }
+          )
         }.build()
       )
 
-      addProperties(sanitizedProperties.map { (name, schema) ->
-        PropertySpec.builder(name, schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties))
-          .apply {
-            initializer(name)
-          }.build()
-      })
+      addProperties(
+        sanitizedProperties.map { (name, schema) ->
+          PropertySpec.builder(
+            name,
+            schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
+          )
+            .apply {
+              initializer(name)
+            }.build()
+        }
+      )
 
       sanitizedProperties.filterValues { it is ObjectSchema }.forEach { (name, schema) ->
         addType(schema.toKotlinTypeSpec(name = name.capitalized(), parentType = typeName))
@@ -128,6 +137,7 @@ internal sealed interface Generator {
         else -> String::class.asTypeName()
       }
     }
+
     is ComposedSchema -> ClassName(modelPackage, operationId.capitalized())
     is BooleanSchema -> Boolean::class.asTypeName()
     else -> {

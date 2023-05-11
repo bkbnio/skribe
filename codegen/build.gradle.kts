@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.detekt
+
 plugins {
   kotlin("jvm")
   kotlin("plugin.serialization")
@@ -8,6 +10,10 @@ plugins {
   id("maven-publish")
   id("java-library")
   id("signing")
+}
+
+detekt {
+  autoCorrect = true
 }
 
 dependencies {

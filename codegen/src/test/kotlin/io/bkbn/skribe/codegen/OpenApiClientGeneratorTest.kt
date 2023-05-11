@@ -46,6 +46,6 @@ class OpenApiClientGeneratorTest : DescribeSpec({
   companion object {
     private fun getFileUrl(fileName: String): String =
       this::class.java.classLoader.getResource(fileName)?.toString()
-        ?: throw Exception("File not found")
+        ?: error("File not found")
   }
 }

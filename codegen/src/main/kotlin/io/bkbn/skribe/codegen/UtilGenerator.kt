@@ -24,26 +24,34 @@ class UtilGenerator(override val basePackage: String, override val openApi: Open
   }
 
   private fun generateSerializers(): FileSpec = FileSpec.builder(utilPackage, "Serializers").apply {
-    addType(TypeSpec.objectBuilder("UuidSerializer").apply {
-      addSuperinterface(KSerializer::class.parameterizedBy(Uuid::class))
-      addProperty(PropertySpec.builder("descriptor", SerialDescriptor::class).apply {
-        addModifiers(KModifier.OVERRIDE)
-        val psd = MemberName("kotlinx.serialization.descriptors", "PrimitiveSerialDescriptor")
-        initializer("%M(%S, %T.STRING)", psd, "UUID", PrimitiveKind::class)
-      }.build())
-      addFunction(FunSpec.builder("deserialize").apply {
-        addModifiers(KModifier.OVERRIDE)
-        addParameter("decoder", Decoder::class)
-        returns(Uuid::class)
-        val uf = MemberName("com.benasher44.uuid", "uuidFrom")
-        addStatement("return %M(decoder.decodeString())", uf)
-      }.build())
-      addFunction(FunSpec.builder("serialize").apply {
-        addModifiers(KModifier.OVERRIDE)
-        addParameter("encoder", Encoder::class)
-        addParameter("value", Uuid::class)
-        addStatement("encoder.encodeString(value.toString())")
-      }.build())
-    }.build())
+    addType(
+      TypeSpec.objectBuilder("UuidSerializer").apply {
+        addSuperinterface(KSerializer::class.parameterizedBy(Uuid::class))
+        addProperty(
+          PropertySpec.builder("descriptor", SerialDescriptor::class).apply {
+            addModifiers(KModifier.OVERRIDE)
+            val psd = MemberName("kotlinx.serialization.descriptors", "PrimitiveSerialDescriptor")
+            initializer("%M(%S, %T.STRING)", psd, "UUID", PrimitiveKind::class)
+          }.build()
+        )
+        addFunction(
+          FunSpec.builder("deserialize").apply {
+            addModifiers(KModifier.OVERRIDE)
+            addParameter("decoder", Decoder::class)
+            returns(Uuid::class)
+            val uf = MemberName("com.benasher44.uuid", "uuidFrom")
+            addStatement("return %M(decoder.decodeString())", uf)
+          }.build()
+        )
+        addFunction(
+          FunSpec.builder("serialize").apply {
+            addModifiers(KModifier.OVERRIDE)
+            addParameter("encoder", Encoder::class)
+            addParameter("value", Uuid::class)
+            addStatement("encoder.encodeString(value.toString())")
+          }.build()
+        )
+      }.build()
+    )
   }.build()
 }
