@@ -85,9 +85,11 @@ internal sealed interface Generator {
                   )
                 }
                 if (formattedName != name) {
-                  addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
-                    addMember("%S", name)
-                  }.build())
+                  addAnnotation(
+                    AnnotationSpec.builder(SerialName::class).apply {
+                      addMember("%S", name)
+                    }.build()
+                  )
                 }
               }.build()
             }
