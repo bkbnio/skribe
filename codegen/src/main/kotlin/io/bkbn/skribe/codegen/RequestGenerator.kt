@@ -15,6 +15,7 @@ import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
 import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.ObjectSchema
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
 import java.lang.StringBuilder
 
@@ -44,20 +45,22 @@ class RequestGenerator(
     }.build()
 
   private fun Operation.createResponseFile(): FileSpec? {
-    val inlineResponseTypes = responses
-      .filterValues { it.content != null }
-      .values
-      .mapNotNull { response ->
-        val content = response.content
-        val contentType = content.keys.first()
-        content[contentType]?.schema
-      }
-      .filter { it.`$ref` == null }
+    val inlineResponseTypes = collectInlineResponseTypes()
     if (inlineResponseTypes.isEmpty()) return null
     return FileSpec.builder(modelPackage, operationId.capitalized()).apply {
       inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
     }.build()
   }
+
+  private fun Operation.collectInlineResponseTypes(): List<Schema<*>> = responses
+    .filterValues { it.content != null }
+    .values
+    .mapNotNull { response ->
+      val content = response.content
+      val contentType = content.keys.first()
+      content[contentType]?.schema
+    }
+    .filter { it.`$ref` == null }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
