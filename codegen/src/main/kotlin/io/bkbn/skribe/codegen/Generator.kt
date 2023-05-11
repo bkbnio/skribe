@@ -170,10 +170,16 @@ internal sealed interface Generator {
   @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
-    is MapSchema -> Map::class.asTypeName().parameterizedBy(
-      String::class.asTypeName(),
-      (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
-    )
+    is MapSchema -> {
+      when (additionalProperties) {
+        is Boolean -> Map::class.asTypeName().parameterizedBy(String::class.asTypeName(), Any::class.asTypeName())
+        is Schema<*> -> Map::class.asTypeName().parameterizedBy(
+          String::class.asTypeName(),
+          (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
+        )
+        else -> error("Unknown schema type: $this")
+      }
+    }
 
     is UUIDSchema -> Uuid::class.asTypeName()
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
