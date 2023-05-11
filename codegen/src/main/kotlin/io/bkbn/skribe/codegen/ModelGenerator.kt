@@ -33,17 +33,20 @@ class ModelGenerator(override val basePackage: String, override val openApi: Ope
       openApi.generateComponentRequestBodyModels()
   }
 
-  private fun OpenAPI.generateComponentSchemaModels(): Map<String, FileSpec> {
-    return components.schemas.mapValues { (name, schema) ->
+  private fun OpenAPI.generateComponentSchemaModels(): Map<String, FileSpec> =
+    components.schemas.mapValues { (name, schema) ->
       FileSpec.builder(modelPackage, name).apply {
         addSchemaType(name, schema)
       }.build()
     }
-  }
 
-  private fun OpenAPI.generateComponentResponseModels(): Map<String, FileSpec> {
-    return emptyMap()
-  }
+  private fun OpenAPI.generateComponentResponseModels(): Map<String, FileSpec> =
+    components.responses.mapValues { (name, response) ->
+      val schema = response.content.values.first().schema
+      FileSpec.builder(modelPackage, name).apply {
+        addSchemaType(name, schema)
+      }.build()
+    }
 
   private fun OpenAPI.generateComponentRequestBodyModels(): Map<String, FileSpec> {
     return emptyMap()
