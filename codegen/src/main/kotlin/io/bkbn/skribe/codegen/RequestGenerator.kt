@@ -13,6 +13,7 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
+import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
 import java.lang.StringBuilder
@@ -61,7 +62,7 @@ class RequestGenerator(
       val contentType = content.keys.first()
       content[contentType]?.schema
     }
-    .filter { it.`$ref` == null }
+    .filter { it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null) }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
