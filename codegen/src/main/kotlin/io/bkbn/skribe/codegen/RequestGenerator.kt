@@ -74,12 +74,7 @@ class RequestGenerator(
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
       description?.let { addKdoc(it) }
-      val responseTypes =
-        this@createRequestFunction.collectPossibleResponseTypes()
-      val responseBuilder = StringBuilder()
-      responseBuilder.append("Body can be one of the following types:\n")
-      responseTypes.forEach { responseBuilder.append("\t- [$it]\n") }
-      addKdoc(responseBuilder.toString())
+      addTypeHints(this@createRequestFunction)
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = when (method) {
         HttpMethod.POST -> MemberName("io.ktor.client.request", "post")
@@ -148,5 +143,13 @@ class RequestGenerator(
 
       else -> error("Unknown response type: $response")
     }
+  }
+
+  private fun FunSpec.Builder.addTypeHints(operation: Operation) {
+    val responseTypes = operation.collectPossibleResponseTypes()
+    val responseBuilder = StringBuilder()
+    responseBuilder.append("Body can be one of the following types:\n")
+    responseTypes.forEach { responseBuilder.append("\t- [$it]\n") }
+    addKdoc(responseBuilder.toString())
   }
 }
