@@ -15,15 +15,19 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
+import io.swagger.v3.oas.models.media.BinarySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
 import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.DateTimeSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
+import io.swagger.v3.oas.models.media.MapSchema
 import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
+import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.parameters.RequestBody
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Locale
@@ -50,7 +54,7 @@ internal sealed interface Generator {
   fun String.sanitizeEnumConstant(): String =
     trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
 
-  fun String.sanitizePropertyName(): String = trim().replace(Regex("\\s+"), "_").lowercase(Locale.getDefault())
+  fun String.sanitizePropertyName(): String = trim().replace(Regex("[\\s.]+"), "_").lowercase(Locale.getDefault())
 
   val Schema<*>.enumConstants: List<String>
     get() = enum?.map { it.toString() } ?: emptyList()
@@ -137,6 +141,7 @@ internal sealed interface Generator {
   val uuidSerializerClassName: ClassName
     get() = ClassName(utilPackage, "UuidSerializer")
 
+  @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(operationId: String): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(operationId))
     is UUIDSchema -> Uuid::class.asTypeName()
@@ -145,13 +150,15 @@ internal sealed interface Generator {
     is NumberSchema -> Int::class.asTypeName()
     is StringSchema -> {
       when {
-        enumConstants.isNotEmpty() -> TODO()
+        enumConstants.isNotEmpty() -> ClassName(modelPackage, operationId.capitalized())
         else -> String::class.asTypeName()
       }
     }
 
     is ComposedSchema -> ClassName(modelPackage, operationId.capitalized())
     is BooleanSchema -> Boolean::class.asTypeName()
+    is ObjectSchema -> ClassName(modelPackage, operationId.capitalized())
+    is BinarySchema -> ByteArray::class.asTypeName()
     else -> {
       when {
         isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
@@ -160,8 +167,14 @@ internal sealed interface Generator {
     }
   }
 
+  @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
+    is MapSchema -> Map::class.asTypeName().parameterizedBy(
+      String::class.asTypeName(),
+      (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
+    )
+
     is UUIDSchema -> Uuid::class.asTypeName()
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
@@ -189,7 +202,10 @@ internal sealed interface Generator {
   fun Schema<*>.toEnumType(name: String): TypeSpec {
     return TypeSpec.enumBuilder(name).apply {
       addAnnotation(Serializable::class)
-      this@toEnumType.enumConstants.forEach { addEnumConstant(it.sanitizeEnumConstant()) }
+      this@toEnumType.enumConstants
+        .filter { it == "null" }
+        .filter { it.isBlank() }
+        .forEach { addEnumConstant(it.sanitizeEnumConstant()) }
     }.build()
   }
 
@@ -206,8 +222,16 @@ internal sealed interface Generator {
   }
 
   fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
-    require(allOf.all { it.`$ref` != null }) { "Currently, all members of allOf must be references" }
-    val refs = allOf.map { openApi.components.schemas[it.`$ref`.getRefKey()] }
+    require(allOf.all { it.`$ref` != null || it is ObjectSchema }) {
+      "Currently, all members of allOf must be references or Object Schemas"
+    }
+    val refs = allOf.map {
+      if (it is ObjectSchema) {
+        it
+      } else {
+        openApi.components.schemas[it.`$ref`.getRefKey()]
+      }
+    }
     require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas" }
     val objectRefs = refs.map { it as ObjectSchema }
     val gigaSchema = ObjectSchema()
@@ -234,4 +258,7 @@ internal sealed interface Generator {
       else -> addType(schema.toKotlinTypeSpec(name))
     }
   }
+
+  val RequestBody.safeRequired: Boolean get() = required ?: false
+  val Parameter.safeRequired: Boolean get() = required ?: false
 }

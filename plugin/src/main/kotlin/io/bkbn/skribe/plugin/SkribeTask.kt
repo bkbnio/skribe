@@ -35,6 +35,13 @@ abstract class SkribeTask : DefaultTask() {
 
     val fileSpecs = ApiClientGenerator.generate(specUrl.get(), basePackage.get())
     logger.quiet("Writing files to ${outputDir.get()}")
-    fileSpecs.forEach { it.writeTo(outputDirPath) }
+    fileSpecs.forEach {
+      try {
+        it.writeTo(outputDirPath)
+      } catch (e: NoSuchElementException) {
+        logger.warn("Failed to write file ${it.name} to ${outputDir.get()}")
+        throw e
+      }
+    }
   }
 }

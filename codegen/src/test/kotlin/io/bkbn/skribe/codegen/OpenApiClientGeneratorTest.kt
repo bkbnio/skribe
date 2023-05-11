@@ -20,12 +20,38 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       // Assert
       files shouldHaveSize 123
     }
+    it("Can generate the client for the Docker Engine API") {
+      // Act
+      val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
+
+      // Assert
+      files shouldHaveSize 248
+    }
   }
   describe("Code Compilation") {
     it("Can compile the client code for the Neon API") {
       // Arrange
       val tempDir = createTempDirectory()
       val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+      files.forEach { it.writeTo(tempDir) }
+      val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
+      val compilation = KotlinCompilation().apply {
+        sources = sourceFiles
+        inheritClassPath = true
+        messageOutputStream = System.out
+        workingDir = tempDir.toFile()
+      }
+
+      // Act
+      val result = compilation.compile()
+
+      // Assert
+      result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+    it("Can compile the client code for the docker engine AIP") {
+      // Arrange
+      val tempDir = createTempDirectory()
+      val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {

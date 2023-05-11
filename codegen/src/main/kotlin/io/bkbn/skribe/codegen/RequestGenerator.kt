@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -59,6 +60,9 @@ class RequestGenerator(
     .values
     .mapNotNull { response ->
       val content = response.content
+
+      if (response.content.isEmpty()) return@mapNotNull null
+
       val contentType = content.keys.first()
       content[contentType]?.schema
     }
@@ -80,18 +84,18 @@ class RequestGenerator(
 
       if (bodyType != null) {
         addParameter(
-          ParameterSpec.builder("body", bodyType.copy(nullable = requestBody.required.not())).build()
+          ParameterSpec.builder("body", bodyType.copy(nullable = requestBody.safeRequired.not())).build()
         )
       }
 
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
-      description?.let { addKdoc(it) }
+      description?.let { addKdoc("%L", it) }
       addTypeHints(this@createRequestFunction)
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = method.toKtorMemberName()
       beginControlFlow("return %M(%P)", ktorMember, mutablePath)
-      if (bodyType != null) attachRequestBody(requestBody.required.not())
+      if (bodyType != null) attachRequestBody(requestBody.safeRequired.not())
       if (queryParams.isNotEmpty()) attachQueryParameters(queryParams)
       endControlFlow()
     }.build()
@@ -114,7 +118,7 @@ class RequestGenerator(
       addParameter(
         ParameterSpec.builder(
           parameter.name.formattedParamName(),
-          parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.required.not())
+          parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
         ).build()
       )
     }
@@ -125,7 +129,7 @@ class RequestGenerator(
       CodeBlock.builder().apply {
         beginControlFlow("url")
         parameters.forEach { param ->
-          if (param.required) {
+          if (param.safeRequired) {
             addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
           } else {
             addStatement(
@@ -167,6 +171,9 @@ class RequestGenerator(
       response.`$ref` != null -> ClassName(modelPackage, response.`$ref`.getRefKey())
       response.content != null -> {
         val content = response.content
+
+        if (response.content.isEmpty()) return@map Unit::class.asTypeName()
+
         val contentType = content.keys.first()
         val schema = content[contentType]?.schema
         when {
@@ -184,7 +191,7 @@ class RequestGenerator(
     val responseTypes = operation.collectPossibleResponseTypes()
     val responseBuilder = StringBuilder()
     responseBuilder.append("Body can be one of the following types:\n")
-    responseTypes.forEach { responseBuilder.append("\t- [$it]\n") }
+    responseTypes.toSet().forEach { responseBuilder.append("\t- [$it]\n") }
     addKdoc(responseBuilder.toString())
   }
 }
