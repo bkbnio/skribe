@@ -16,6 +16,7 @@ import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.Parameter
 import java.lang.StringBuilder
 
@@ -26,7 +27,7 @@ class RequestGenerator(
 
   fun generate(): Map<String, FileSpec> =
     openApi.paths.mapValues { (path, pathItem) ->
-      pathItem.createRequestMethodFiles(path) + pathItem.createResponseTypeFiles()
+      pathItem.createRequestMethodFiles(path) + pathItem.createResponseTypeFiles() + pathItem.createRequestTypeFiles() + pathItem.createParameterTypeFiles()
     }
       .values
       .flatMap { it.entries }
@@ -42,6 +43,16 @@ class RequestGenerator(
       "${operation.operationId}Response" to operation.createResponseFile()
     }.filterValues { it != null }.mapValues { it.value!! }
 
+  private fun PathItem.createRequestTypeFiles(): Map<String, FileSpec> =
+    readOperationsMap().entries.associate { (_, operation) ->
+      "${operation.operationId}Request" to operation.createRequestBodyFile()
+    }.filterValues { it != null }.mapValues { it.value!! }
+
+  private fun PathItem.createParameterTypeFiles(): Map<String, FileSpec> =
+    readOperationsMap().entries.associate { (_, operation) ->
+      "${operation.operationId}Parameter" to operation.createParameterFile()
+    }.filterValues { it != null }.mapValues { it.value!! }
+
   private fun Operation.createRequestFile(path: String, method: HttpMethod, pathItem: PathItem): FileSpec =
     FileSpec.builder(requestPackage, operationId.capitalized()).apply {
       addFunction(createRequestFunction(path, method, pathItem))
@@ -50,8 +61,29 @@ class RequestGenerator(
   private fun Operation.createResponseFile(): FileSpec? {
     val inlineResponseTypes = collectInlineResponseTypes()
     if (inlineResponseTypes.isEmpty()) return null
-    return FileSpec.builder(modelPackage, operationId.capitalized()).apply {
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Response")).apply {
       inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+    }.build()
+  }
+
+  private fun Operation.createRequestBodyFile(): FileSpec? {
+    val inlineRequestTypes = collectInlineRequestTypes()
+    if (inlineRequestTypes.isEmpty()) return null
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Request")).apply {
+      inlineRequestTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+    }.build()
+  }
+
+  private fun Operation.createParameterFile(): FileSpec? {
+    val inlineParameterTypes = collectInlineParameterTypes()
+    if (inlineParameterTypes.isEmpty()) return null
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Param")).apply {
+      inlineParameterTypes.forEach { (name, schema) ->
+        addSchemaType(
+          name,
+          schema
+        )
+      }
     }.build()
   }
 
@@ -67,6 +99,16 @@ class RequestGenerator(
       content[contentType]?.schema
     }
     .filter { it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null) }
+
+  private fun Operation.collectInlineRequestTypes(): List<Schema<*>> =
+    requestBody?.content?.values?.mapNotNull { content ->
+      content.schema
+    } ?: emptyList()
+
+  private fun Operation.collectInlineParameterTypes(): Map<String, Schema<*>> =
+    (parameters ?: emptyList()).associate { parameter ->
+      operationId.capitalized().plus(parameter.name.capitalized()) to parameter.schema
+    }.filterValues { it is StringSchema && it.enumConstants.isNotEmpty() }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
@@ -116,10 +158,17 @@ class RequestGenerator(
     allParams.forEach { parameter ->
       val parameterSchema = parameter.schema
       addParameter(
-        ParameterSpec.builder(
-          parameter.name.formattedParamName(),
-          parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
-        ).build()
+        if (parameter.schema is StringSchema && parameter.schema.enumConstants.isNotEmpty()) {
+          ParameterSpec.builder(
+            parameter.name.formattedParamName(),
+            ClassName(modelPackage, operation.operationId.capitalized().plus(parameter.name.capitalized()))
+          ).build()
+        } else {
+          ParameterSpec.builder(
+            parameter.name.formattedParamName(),
+            parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
+          ).build()
+        }
       )
     }
   }

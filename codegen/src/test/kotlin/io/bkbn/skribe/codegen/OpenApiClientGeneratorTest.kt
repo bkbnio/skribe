@@ -48,7 +48,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       // Assert
       result.exitCode shouldBe KotlinCompilation.ExitCode.OK
     }
-    it("Can compile the client code for the docker engine AIP") {
+    it("Can compile the client code for the docker engine API") {
       // Arrange
       val tempDir = createTempDirectory()
       val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")

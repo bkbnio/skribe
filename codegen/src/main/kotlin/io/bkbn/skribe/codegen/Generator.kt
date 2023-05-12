@@ -52,9 +52,9 @@ internal sealed interface Generator {
   }.joinToString("")
 
   fun String.sanitizeEnumConstant(): String =
-    trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
+    trim().replace(Regex("[\\s-/]+"), "_").uppercase(Locale.getDefault())
 
-  fun String.sanitizePropertyName(): String = trim().replace(Regex("[\\s.]+"), "_").lowercase(Locale.getDefault())
+  fun String.sanitizePropertyName(): String = trim().replace(Regex("[\\s.-]+"), "_").lowercase(Locale.getDefault())
 
   val Schema<*>.enumConstants: List<String>
     get() = enum?.map { it.toString() } ?: emptyList()
@@ -114,10 +114,11 @@ internal sealed interface Generator {
         }
       )
 
-      propertiesOrEmpty.filterValues { it is ObjectSchema }.forEach { (name, schema) ->
-        val formattedName = name.formatPropertyName()
-        addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
-      }
+      propertiesOrEmpty.filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
+        .forEach { (name, schema) ->
+          val formattedName = name.formatPropertyName()
+          addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+        }
     }.build()
   }
 
@@ -177,6 +178,7 @@ internal sealed interface Generator {
           String::class.asTypeName(),
           (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
         )
+
         else -> error("Unknown schema type: $this")
       }
     }
@@ -187,7 +189,7 @@ internal sealed interface Generator {
     is NumberSchema -> Int::class.asTypeName()
     is StringSchema -> {
       when {
-        enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
+        this.enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
         else -> String::class.asTypeName()
       }
     }
@@ -209,8 +211,8 @@ internal sealed interface Generator {
     return TypeSpec.enumBuilder(name).apply {
       addAnnotation(Serializable::class)
       this@toEnumType.enumConstants
-        .filter { it == "null" }
-        .filter { it.isBlank() }
+        .filterNot { it == "null" }
+        .filterNot { it.isBlank() }
         .forEach { addEnumConstant(it.sanitizeEnumConstant()) }
     }.build()
   }
