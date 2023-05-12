@@ -70,7 +70,7 @@ internal sealed interface Generator {
             val formattedName = propName.convertToCamelCase()
             ParameterSpec.builder(
               formattedName,
-              propSchema.toKotlinTypeName(propName, typeName).copy(nullable = propName !in schema.requiredProperties)
+              propSchema.toKotlinTypeName(formattedName, typeName).copy(nullable = propName !in schema.requiredProperties)
             ).apply {
               if (propSchema is UUIDSchema) {
                 addAnnotation(
@@ -95,11 +95,11 @@ internal sealed interface Generator {
 
   private fun TypeSpec.Builder.addSchemaProperties(schema: Schema<*>, typeName: ClassName) {
     addProperties(
-      schema.propertiesOrEmpty.map { (name, schema) ->
-        val formattedName = name.convertToCamelCase()
+      schema.propertiesOrEmpty.map { (propName, propSchema) ->
+        val formattedName = propName.convertToCamelCase()
         PropertySpec.builder(
           formattedName,
-          schema.toKotlinTypeName(formattedName, typeName).copy(nullable = name !in schema.requiredProperties)
+          propSchema.toKotlinTypeName(formattedName, typeName).copy(nullable = propName !in schema.requiredProperties)
         ).apply {
           initializer(formattedName)
         }.build()
