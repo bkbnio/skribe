@@ -4,7 +4,7 @@ plugins {
   id("io.bkbn.sourdough.application.jvm")
   id("application")
   id("org.jetbrains.kotlinx.kover")
-  id("io.bkbn.skribe") version "0.2.3-SNAPSHOT"
+  //id("io.bkbn.skribe") version "SET_TO_VERSION_UNDER_TEST"
 }
 
 dependencies {
@@ -27,9 +27,9 @@ sourceSets {
   }
 }
 
-skribe {
-  specUrl.set(file("../codegen/src/test/resources/docker.yml").absoluteFile.toString())
-  outputDir.set("$projectDir/src/main/gen")
-  basePackage.set("io.bkbn.sourdough.clients")
-  shouldCleanDir.set(true)
-}
+//skribe {
+//  specUrl.set(file("../codegen/src/test/resources/docker.yml").absoluteFile.toString())
+//  outputDir.set("$projectDir/src/main/gen")
+//  basePackage.set("io.bkbn.sourdough.clients")
+//  shouldCleanDir.set(true)
+//}
