@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -8,6 +8,12 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
+import io.bkbn.skribe.codegen.utils.SchemaUtils.enumConstants
+import io.bkbn.skribe.codegen.utils.SchemaUtils.safeRequired
+import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
+import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -15,6 +21,7 @@ import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.PathItem.HttpMethod
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.Parameter
 import java.lang.StringBuilder
 
@@ -25,7 +32,10 @@ class RequestGenerator(
 
   fun generate(): Map<String, FileSpec> =
     openApi.paths.mapValues { (path, pathItem) ->
-      pathItem.createRequestMethodFiles(path) + pathItem.createResponseTypeFiles()
+      pathItem.createRequestMethodFiles(path) +
+        pathItem.createResponseTypeFiles() +
+        pathItem.createRequestTypeFiles() +
+        pathItem.createParameterTypeFiles()
     }
       .values
       .flatMap { it.entries }
@@ -41,6 +51,16 @@ class RequestGenerator(
       "${operation.operationId}Response" to operation.createResponseFile()
     }.filterValues { it != null }.mapValues { it.value!! }
 
+  private fun PathItem.createRequestTypeFiles(): Map<String, FileSpec> =
+    readOperationsMap().entries.associate { (_, operation) ->
+      "${operation.operationId}Request" to operation.createRequestBodyFile()
+    }.filterValues { it != null }.mapValues { it.value!! }
+
+  private fun PathItem.createParameterTypeFiles(): Map<String, FileSpec> =
+    readOperationsMap().entries.associate { (_, operation) ->
+      "${operation.operationId}Parameter" to operation.createParameterFile()
+    }.filterValues { it != null }.mapValues { it.value!! }
+
   private fun Operation.createRequestFile(path: String, method: HttpMethod, pathItem: PathItem): FileSpec =
     FileSpec.builder(requestPackage, operationId.capitalized()).apply {
       addFunction(createRequestFunction(path, method, pathItem))
@@ -49,8 +69,28 @@ class RequestGenerator(
   private fun Operation.createResponseFile(): FileSpec? {
     val inlineResponseTypes = collectInlineResponseTypes()
     if (inlineResponseTypes.isEmpty()) return null
-    return FileSpec.builder(modelPackage, operationId.capitalized()).apply {
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Response")).apply {
       inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+    }.build()
+  }
+
+  private fun Operation.createRequestBodyFile(): FileSpec? {
+    val inlineRequestType = collectInlineRequestTypes() ?: return null
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Request")).apply {
+      addSchemaType(operationId.capitalized().plus("Request"), inlineRequestType)
+    }.build()
+  }
+
+  private fun Operation.createParameterFile(): FileSpec? {
+    val inlineParameterTypes = collectInlineParameterTypes()
+    if (inlineParameterTypes.isEmpty()) return null
+    return FileSpec.builder(modelPackage, operationId.capitalized().plus("Param")).apply {
+      inlineParameterTypes.forEach { (name, schema) ->
+        addSchemaType(
+          name,
+          schema
+        )
+      }
     }.build()
   }
 
@@ -59,10 +99,25 @@ class RequestGenerator(
     .values
     .mapNotNull { response ->
       val content = response.content
+
+      if (response.content.isEmpty()) return@mapNotNull null
+
       val contentType = content.keys.first()
       content[contentType]?.schema
     }
     .filter { it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null) }
+
+  private fun Operation.collectInlineRequestTypes(): Schema<*>? =
+    requestBody?.content?.values?.mapNotNull { content ->
+      content.schema
+    }?.firstOrNull {
+      it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null)
+    }
+
+  private fun Operation.collectInlineParameterTypes(): Map<String, Schema<*>> =
+    (parameters ?: emptyList()).associate { parameter ->
+      operationId.capitalized().plus(parameter.name.capitalized()) to parameter.schema
+    }.filterValues { it is StringSchema && it.enumConstants.isNotEmpty() }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
@@ -73,25 +128,25 @@ class RequestGenerator(
 
       pathParams.forEach { param ->
         mutablePath =
-          replacePathParameter(mutablePath, param.name, param.name.formattedParamName())
+          replacePathParameter(mutablePath, param.name, param.name.convertToCamelCase())
       }
 
-      val bodyType = requestBody?.content?.values?.first()?.schema?.toKotlinTypeName(operationId)
+      val bodyType = requestBody?.content?.values?.first()?.schema?.toKotlinTypeName(operationId.plus("Request"))
 
       if (bodyType != null) {
         addParameter(
-          ParameterSpec.builder("body", bodyType.copy(nullable = requestBody.required.not())).build()
+          ParameterSpec.builder("body", bodyType.copy(nullable = requestBody.safeRequired.not())).build()
         )
       }
 
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
-      description?.let { addKdoc(it) }
+      description?.let { addKdoc("%L", it) }
       addTypeHints(this@createRequestFunction)
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = method.toKtorMemberName()
       beginControlFlow("return %M(%P)", ktorMember, mutablePath)
-      if (bodyType != null) attachRequestBody(requestBody.required.not())
+      if (bodyType != null) attachRequestBody(requestBody.safeRequired.not())
       if (queryParams.isNotEmpty()) attachQueryParameters(queryParams)
       endControlFlow()
     }.build()
@@ -112,10 +167,17 @@ class RequestGenerator(
     allParams.forEach { parameter ->
       val parameterSchema = parameter.schema
       addParameter(
-        ParameterSpec.builder(
-          parameter.name.formattedParamName(),
-          parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.required.not())
-        ).build()
+        if (parameter.schema is StringSchema && parameter.schema.enumConstants.isNotEmpty()) {
+          ParameterSpec.builder(
+            parameter.name.convertToCamelCase(),
+            ClassName(modelPackage, operation.operationId.capitalized().plus(parameter.name.capitalized()))
+          ).build()
+        } else {
+          ParameterSpec.builder(
+            parameter.name.convertToCamelCase(),
+            parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
+          ).build()
+        }
       )
     }
   }
@@ -125,12 +187,12 @@ class RequestGenerator(
       CodeBlock.builder().apply {
         beginControlFlow("url")
         parameters.forEach { param ->
-          if (param.required) {
-            addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
+          if (param.safeRequired) {
+            addStatement("parameters.append(%S, %L.toString())", param.name, param.name.convertToCamelCase())
           } else {
             addStatement(
               "%L?.let { parameters.append(%S, it.toString()) }",
-              param.name.formattedParamName(),
+              param.name.convertToCamelCase(),
               param.name
             )
           }
@@ -160,13 +222,14 @@ class RequestGenerator(
     }
   }
 
-  private fun String.formattedParamName(): String = this.sanitizePropertyName().snakeToCamel()
-
   private fun Operation.collectPossibleResponseTypes(): List<TypeName> = responses.values.map { response ->
     when {
       response.`$ref` != null -> ClassName(modelPackage, response.`$ref`.getRefKey())
       response.content != null -> {
         val content = response.content
+
+        if (response.content.isEmpty()) return@map Unit::class.asTypeName()
+
         val contentType = content.keys.first()
         val schema = content[contentType]?.schema
         when {
@@ -184,7 +247,7 @@ class RequestGenerator(
     val responseTypes = operation.collectPossibleResponseTypes()
     val responseBuilder = StringBuilder()
     responseBuilder.append("Body can be one of the following types:\n")
-    responseTypes.forEach { responseBuilder.append("\t- [$it]\n") }
+    responseTypes.toSet().forEach { responseBuilder.append("\t- [$it]\n") }
     addKdoc(responseBuilder.toString())
   }
 }

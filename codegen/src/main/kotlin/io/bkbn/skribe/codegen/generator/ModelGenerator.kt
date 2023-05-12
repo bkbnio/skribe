@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.squareup.kotlinpoet.FileSpec
 import io.swagger.v3.oas.models.OpenAPI
@@ -11,19 +11,19 @@ class ModelGenerator(override val basePackage: String, override val openApi: Ope
   }
 
   private fun OpenAPI.generateComponentSchemaModels(): Map<String, FileSpec> =
-    components.schemas.mapValues { (name, schema) ->
+    components.schemas?.mapValues { (name, schema) ->
       FileSpec.builder(modelPackage, name).apply {
         addSchemaType(name, schema)
       }.build()
-    }
+    } ?: emptyMap()
 
   private fun OpenAPI.generateComponentResponseModels(): Map<String, FileSpec> =
-    components.responses.mapValues { (name, response) ->
+    components.responses?.mapValues { (name, response) ->
       val schema = response.content.values.first().schema
       FileSpec.builder(modelPackage, name).apply {
         addSchemaType(name, schema)
       }.build()
-    }
+    } ?: emptyMap()
 
   private fun OpenAPI.generateComponentRequestBodyModels(): Map<String, FileSpec> {
     return emptyMap()

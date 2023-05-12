@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -13,12 +13,22 @@ import com.squareup.kotlinpoet.TypeAliasSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
+import io.bkbn.skribe.codegen.utils.SchemaUtils.enumConstants
+import io.bkbn.skribe.codegen.utils.SchemaUtils.isReferenceSchema
+import io.bkbn.skribe.codegen.utils.SchemaUtils.propertiesOrEmpty
+import io.bkbn.skribe.codegen.utils.SchemaUtils.requiredProperties
+import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
+import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
+import io.bkbn.skribe.codegen.utils.StringUtils.sanitizeEnumConstant
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
+import io.swagger.v3.oas.models.media.BinarySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
 import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.DateTimeSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
+import io.swagger.v3.oas.models.media.MapSchema
 import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
@@ -26,7 +36,6 @@ import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.util.Locale
 
 internal sealed interface Generator {
   val basePackage: String
@@ -38,27 +47,6 @@ internal sealed interface Generator {
   val utilPackage
     get() = "$basePackage.util"
 
-  fun String.capitalized() =
-    replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-
-  fun String.isSnake() = matches(Regex("^[a-z]+(_[a-z0-9]+)+$"))
-
-  fun String.snakeToCamel() = split("_").mapIndexed { index, word ->
-    if (index == 0) word else word.capitalized()
-  }.joinToString("")
-
-  fun String.sanitizeEnumConstant(): String =
-    trim().replace(Regex("[\\s-]+"), "_").uppercase(Locale.getDefault())
-
-  fun String.sanitizePropertyName(): String = trim().replace(Regex("\\s+"), "_").lowercase(Locale.getDefault())
-
-  val Schema<*>.enumConstants: List<String>
-    get() = enum?.map { it.toString() } ?: emptyList()
-
-  fun String.getRefKey() = split("/").last()
-
-  fun Schema<*>.isReferenceSchema(): Boolean = `$ref` != null
-
   fun Schema<*>.toKotlinTypeSpec(name: String, parentType: ClassName? = null): TypeSpec {
     if (propertiesOrEmpty.isEmpty()) return emptyObjectType(name)
     val typeName = when (parentType) {
@@ -68,67 +56,89 @@ internal sealed interface Generator {
     return TypeSpec.classBuilder(name).apply {
       addModifiers(KModifier.DATA)
       addAnnotation(Serializable::class)
-      primaryConstructor(
-        FunSpec.constructorBuilder().apply {
-          addParameters(
-            propertiesOrEmpty.map { (name, schema) ->
-              val formattedName = name.formatPropertyName()
-              ParameterSpec.builder(
-                formattedName,
-                schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
-              ).apply {
-                if (schema is UUIDSchema) {
-                  addAnnotation(
-                    AnnotationSpec.builder(Serializable::class).apply {
-                      addMember("%T::class", uuidSerializerClassName)
-                    }.build()
-                  )
-                }
-                if (formattedName != name) {
-                  addAnnotation(
-                    AnnotationSpec.builder(SerialName::class).apply {
-                      addMember("%S", name)
-                    }.build()
-                  )
-                }
-              }.build()
-            }
-          )
-        }.build()
-      )
-
-      addProperties(
-        propertiesOrEmpty.map { (name, schema) ->
-          val formattedName = name.formatPropertyName()
-          PropertySpec.builder(
-            formattedName,
-            schema.toKotlinTypeName(formattedName, typeName).copy(nullable = name !in requiredProperties)
-          )
-            .apply {
-              initializer(formattedName)
-            }.build()
-        }
-      )
-
-      propertiesOrEmpty.filterValues { it is ObjectSchema }.forEach { (name, schema) ->
-        val formattedName = name.formatPropertyName()
-        addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
-      }
+      createPrimaryConstructor(this@toKotlinTypeSpec, typeName)
+      addSchemaProperties(this@toKotlinTypeSpec, typeName)
+      attachInlineClasses(this@toKotlinTypeSpec, typeName)
     }.build()
   }
 
-  fun String.formatPropertyName(): String = sanitizePropertyName().let {
-    when {
-      it.isSnake() -> it.snakeToCamel()
-      else -> it
-    }
+  private fun TypeSpec.Builder.createPrimaryConstructor(schema: Schema<*>, typeName: ClassName) {
+    primaryConstructor(
+      FunSpec.constructorBuilder().apply {
+        addParameters(
+          schema.propertiesOrEmpty.map { (propName, propSchema) ->
+            val formattedName = propName.convertToCamelCase()
+            ParameterSpec.builder(
+              formattedName,
+              propSchema.toKotlinTypeName(formattedName, typeName).copy(
+                nullable = propName !in schema.requiredProperties
+              )
+            ).apply {
+              if (propSchema is UUIDSchema) {
+                addAnnotation(
+                  AnnotationSpec.builder(Serializable::class).apply {
+                    addMember("%T::class", uuidSerializerClassName)
+                  }.build()
+                )
+              }
+              if (formattedName != propName) {
+                addAnnotation(
+                  AnnotationSpec.builder(SerialName::class).apply {
+                    addMember("%S", propName)
+                  }.build()
+                )
+              }
+            }.build()
+          }
+        )
+      }.build()
+    )
   }
 
-  val Schema<*>.requiredProperties: List<String>
-    get() = required ?: emptyList()
+  private fun TypeSpec.Builder.addSchemaProperties(schema: Schema<*>, typeName: ClassName) {
+    addProperties(
+      schema.propertiesOrEmpty.map { (propName, propSchema) ->
+        val formattedName = propName.convertToCamelCase()
+        PropertySpec.builder(
+          formattedName,
+          propSchema.toKotlinTypeName(formattedName, typeName).copy(nullable = propName !in schema.requiredProperties)
+        ).apply {
+          initializer(formattedName)
+        }.build()
+      }
+    )
+  }
 
-  val Schema<*>.propertiesOrEmpty: Map<String, Schema<*>>
-    get() = properties ?: emptyMap()
+  private fun TypeSpec.Builder.attachInlineClasses(parentSchema: Schema<*>, typeName: ClassName) {
+    parentSchema.propertiesOrEmpty
+      .filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
+      .forEach { (name, schema) ->
+        val formattedName = name.convertToCamelCase()
+        addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
+
+    parentSchema.propertiesOrEmpty
+      .filterValues { it is ArraySchema && (it.items is ObjectSchema || it.items.enumConstants.isNotEmpty()) }
+      .forEach { (name, schema) ->
+        val itemSchema = schema.items
+        val formattedName = name.convertToCamelCase()
+        addType(itemSchema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
+
+    parentSchema.propertiesOrEmpty
+      .filterValues {
+        it is MapSchema &&
+          (
+            it.additionalProperties is ObjectSchema ||
+              (it.additionalProperties as Schema<*>).enumConstants.isNotEmpty()
+            )
+      }
+      .forEach { (name, schema) ->
+        val additionalPropertySchema = schema.additionalProperties as Schema<*>
+        val formattedName = name.convertToCamelCase()
+        addType(additionalPropertySchema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
+  }
 
   fun emptyObjectType(name: String) = TypeSpec.objectBuilder(name).apply {
     addAnnotation(Serializable::class)
@@ -137,6 +147,7 @@ internal sealed interface Generator {
   val uuidSerializerClassName: ClassName
     get() = ClassName(utilPackage, "UuidSerializer")
 
+  @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(operationId: String): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(operationId))
     is UUIDSchema -> Uuid::class.asTypeName()
@@ -145,13 +156,15 @@ internal sealed interface Generator {
     is NumberSchema -> Int::class.asTypeName()
     is StringSchema -> {
       when {
-        enumConstants.isNotEmpty() -> TODO()
+        enumConstants.isNotEmpty() -> ClassName(modelPackage, operationId.capitalized())
         else -> String::class.asTypeName()
       }
     }
 
     is ComposedSchema -> ClassName(modelPackage, operationId.capitalized())
     is BooleanSchema -> Boolean::class.asTypeName()
+    is ObjectSchema -> ClassName(modelPackage, operationId.capitalized())
+    is BinarySchema -> ByteArray::class.asTypeName()
     else -> {
       when {
         isReferenceSchema() -> ClassName(modelPackage, `$ref`.getRefKey())
@@ -160,15 +173,28 @@ internal sealed interface Generator {
     }
   }
 
+  @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
+    is MapSchema -> {
+      when (additionalProperties) {
+        is Boolean -> Map::class.asTypeName().parameterizedBy(String::class.asTypeName(), Any::class.asTypeName())
+        is Schema<*> -> Map::class.asTypeName().parameterizedBy(
+          String::class.asTypeName(),
+          (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
+        )
+
+        else -> error("Unknown schema type: $this")
+      }
+    }
+
     is UUIDSchema -> Uuid::class.asTypeName()
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
     is NumberSchema -> Int::class.asTypeName()
     is StringSchema -> {
       when {
-        enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
+        this.enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
         else -> String::class.asTypeName()
       }
     }
@@ -189,7 +215,10 @@ internal sealed interface Generator {
   fun Schema<*>.toEnumType(name: String): TypeSpec {
     return TypeSpec.enumBuilder(name).apply {
       addAnnotation(Serializable::class)
-      this@toEnumType.enumConstants.forEach { addEnumConstant(it.sanitizeEnumConstant()) }
+      this@toEnumType.enumConstants
+        .filterNot { it == "null" }
+        .filterNot { it.isBlank() }
+        .forEach { addEnumConstant(it.sanitizeEnumConstant()) }
     }.build()
   }
 
@@ -206,8 +235,16 @@ internal sealed interface Generator {
   }
 
   fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
-    require(allOf.all { it.`$ref` != null }) { "Currently, all members of allOf must be references" }
-    val refs = allOf.map { openApi.components.schemas[it.`$ref`.getRefKey()] }
+    require(allOf.all { it.`$ref` != null || it is ObjectSchema }) {
+      "Currently, all members of allOf must be references or Object Schemas"
+    }
+    val refs = allOf.map {
+      if (it is ObjectSchema) {
+        it
+      } else {
+        openApi.components.schemas[it.`$ref`.getRefKey()]
+      }
+    }
     require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas" }
     val objectRefs = refs.map { it as ObjectSchema }
     val gigaSchema = ObjectSchema()

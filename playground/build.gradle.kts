@@ -28,7 +28,7 @@ sourceSets {
 }
 
 //skribe {
-//  specUrl.set("https://dfv3qgd2ykmrx.cloudfront.net/api_spec/release/v2.json")
+//  specUrl.set(file("../codegen/src/test/resources/docker.yml").absoluteFile.toString())
 //  outputDir.set("$projectDir/src/main/gen")
 //  basePackage.set("io.bkbn.sourdough.clients")
 //  shouldCleanDir.set(true)

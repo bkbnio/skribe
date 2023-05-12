@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.FileSpec
