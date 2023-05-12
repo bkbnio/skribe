@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -9,6 +9,13 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
+import io.bkbn.skribe.codegen.utils.SchemaUtils.enumConstants
+import io.bkbn.skribe.codegen.utils.SchemaUtils.safeRequired
+import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
+import io.bkbn.skribe.codegen.utils.StringUtils.formattedParamName
+import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
+import io.bkbn.skribe.codegen.utils.StringUtils.sanitizePropertyName
+import io.bkbn.skribe.codegen.utils.StringUtils.snakeToCamel
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -212,8 +219,6 @@ class RequestGenerator(
       "$$replacement"
     }
   }
-
-  private fun String.formattedParamName(): String = this.sanitizePropertyName().snakeToCamel()
 
   private fun Operation.collectPossibleResponseTypes(): List<TypeName> = responses.values.map { response ->
     when {

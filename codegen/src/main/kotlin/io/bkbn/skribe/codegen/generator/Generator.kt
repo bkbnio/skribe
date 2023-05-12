@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -13,6 +13,14 @@ import com.squareup.kotlinpoet.TypeAliasSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
+import io.bkbn.skribe.codegen.utils.SchemaUtils.enumConstants
+import io.bkbn.skribe.codegen.utils.SchemaUtils.isReferenceSchema
+import io.bkbn.skribe.codegen.utils.SchemaUtils.propertiesOrEmpty
+import io.bkbn.skribe.codegen.utils.SchemaUtils.requiredProperties
+import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
+import io.bkbn.skribe.codegen.utils.StringUtils.formatPropertyName
+import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
+import io.bkbn.skribe.codegen.utils.StringUtils.sanitizeEnumConstant
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BinarySchema
@@ -41,27 +49,6 @@ internal sealed interface Generator {
     get() = "$basePackage.models"
   val utilPackage
     get() = "$basePackage.util"
-
-  fun String.capitalized() =
-    replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-
-  fun String.isSnake() = matches(Regex("^[a-z]+(_[a-z0-9]+)+$"))
-
-  fun String.snakeToCamel() = split("_").mapIndexed { index, word ->
-    if (index == 0) word else word.capitalized()
-  }.joinToString("")
-
-  fun String.sanitizeEnumConstant(): String =
-    trim().replace(Regex("[\\s-/]+"), "_").uppercase(Locale.getDefault())
-
-  fun String.sanitizePropertyName(): String = trim().replace(Regex("[\\s.-]+"), "_").lowercase(Locale.getDefault())
-
-  val Schema<*>.enumConstants: List<String>
-    get() = enum?.map { it.toString() } ?: emptyList()
-
-  fun String.getRefKey() = split("/").last()
-
-  fun Schema<*>.isReferenceSchema(): Boolean = `$ref` != null
 
   fun Schema<*>.toKotlinTypeSpec(name: String, parentType: ClassName? = null): TypeSpec {
     if (propertiesOrEmpty.isEmpty()) return emptyObjectType(name)
@@ -121,19 +108,6 @@ internal sealed interface Generator {
         }
     }.build()
   }
-
-  fun String.formatPropertyName(): String = sanitizePropertyName().let {
-    when {
-      it.isSnake() -> it.snakeToCamel()
-      else -> it
-    }
-  }
-
-  val Schema<*>.requiredProperties: List<String>
-    get() = required ?: emptyList()
-
-  val Schema<*>.propertiesOrEmpty: Map<String, Schema<*>>
-    get() = properties ?: emptyMap()
 
   fun emptyObjectType(name: String) = TypeSpec.objectBuilder(name).apply {
     addAnnotation(Serializable::class)
@@ -266,7 +240,4 @@ internal sealed interface Generator {
       else -> addType(schema.toKotlinTypeSpec(name))
     }
   }
-
-  val RequestBody.safeRequired: Boolean get() = required ?: false
-  val Parameter.safeRequired: Boolean get() = required ?: false
 }

@@ -2,6 +2,7 @@ package io.bkbn.skribe.codegen
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.bkbn.skribe.codegen.generator.ApiClientGenerator
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe

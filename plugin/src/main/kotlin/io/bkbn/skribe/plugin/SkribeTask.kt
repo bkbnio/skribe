@@ -1,6 +1,6 @@
 package io.bkbn.skribe.plugin
 
-import io.bkbn.skribe.codegen.ApiClientGenerator
+import io.bkbn.skribe.codegen.generator.ApiClientGenerator
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input

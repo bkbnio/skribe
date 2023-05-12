@@ -1,4 +1,4 @@
-package io.bkbn.skribe.codegen
+package io.bkbn.skribe.codegen.generator
 
 import com.squareup.kotlinpoet.FileSpec
 import io.swagger.v3.oas.models.OpenAPI
