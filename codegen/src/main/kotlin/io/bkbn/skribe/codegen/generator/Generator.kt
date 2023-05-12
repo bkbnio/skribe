@@ -70,7 +70,9 @@ internal sealed interface Generator {
             val formattedName = propName.convertToCamelCase()
             ParameterSpec.builder(
               formattedName,
-              propSchema.toKotlinTypeName(formattedName, typeName).copy(nullable = propName !in schema.requiredProperties)
+              propSchema.toKotlinTypeName(formattedName, typeName).copy(
+                nullable = propName !in schema.requiredProperties
+              )
             ).apply {
               if (propSchema is UUIDSchema) {
                 addAnnotation(
@@ -108,13 +110,15 @@ internal sealed interface Generator {
   }
 
   private fun TypeSpec.Builder.attachInlineClasses(parentSchema: Schema<*>, typeName: ClassName) {
-    parentSchema.propertiesOrEmpty.filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
+    parentSchema.propertiesOrEmpty
+      .filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
       .forEach { (name, schema) ->
         val formattedName = name.convertToCamelCase()
         addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
       }
 
-    parentSchema.propertiesOrEmpty.filterValues { it is ArraySchema && (it.items is ObjectSchema || it.items.enumConstants.isNotEmpty()) }
+    parentSchema.propertiesOrEmpty
+      .filterValues { it is ArraySchema && (it.items is ObjectSchema || it.items.enumConstants.isNotEmpty()) }
       .forEach { (name, schema) ->
         val itemSchema = schema.items
         val formattedName = name.convertToCamelCase()
@@ -124,8 +128,10 @@ internal sealed interface Generator {
     parentSchema.propertiesOrEmpty
       .filterValues {
         it is MapSchema &&
-          (it.additionalProperties is ObjectSchema ||
-            (it.additionalProperties as Schema<*>).enumConstants.isNotEmpty())
+          (
+            it.additionalProperties is ObjectSchema ||
+              (it.additionalProperties as Schema<*>).enumConstants.isNotEmpty()
+            )
       }
       .forEach { (name, schema) ->
         val additionalPropertySchema = schema.additionalProperties as Schema<*>

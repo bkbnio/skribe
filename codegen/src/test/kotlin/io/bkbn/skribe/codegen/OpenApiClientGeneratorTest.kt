@@ -26,7 +26,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
 
       // Assert
-      files shouldHaveSize 248
+      files shouldHaveSize 274
     }
   }
   describe("Code Compilation") {

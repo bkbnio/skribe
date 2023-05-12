@@ -14,8 +14,6 @@ import io.bkbn.skribe.codegen.utils.SchemaUtils.safeRequired
 import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
 import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
 import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
-import io.bkbn.skribe.codegen.utils.StringUtils.sanitizePropertyName
-import io.bkbn.skribe.codegen.utils.StringUtils.snakeToCamel
 import io.ktor.client.HttpClient
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -34,7 +32,10 @@ class RequestGenerator(
 
   fun generate(): Map<String, FileSpec> =
     openApi.paths.mapValues { (path, pathItem) ->
-      pathItem.createRequestMethodFiles(path) + pathItem.createResponseTypeFiles() + pathItem.createRequestTypeFiles() + pathItem.createParameterTypeFiles()
+      pathItem.createRequestMethodFiles(path) +
+        pathItem.createResponseTypeFiles() +
+        pathItem.createRequestTypeFiles() +
+        pathItem.createParameterTypeFiles()
     }
       .values
       .flatMap { it.entries }
@@ -74,10 +75,9 @@ class RequestGenerator(
   }
 
   private fun Operation.createRequestBodyFile(): FileSpec? {
-    val inlineRequestTypes = collectInlineRequestTypes()
-    if (inlineRequestTypes.isEmpty()) return null
+    val inlineRequestType = collectInlineRequestTypes() ?: return null
     return FileSpec.builder(modelPackage, operationId.capitalized().plus("Request")).apply {
-      inlineRequestTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+      addSchemaType(operationId.capitalized().plus("Request"), inlineRequestType)
     }.build()
   }
 
@@ -107,12 +107,12 @@ class RequestGenerator(
     }
     .filter { it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null) }
 
-  private fun Operation.collectInlineRequestTypes(): List<Schema<*>> =
+  private fun Operation.collectInlineRequestTypes(): Schema<*>? =
     requestBody?.content?.values?.mapNotNull { content ->
       content.schema
-    }?.filter {
+    }?.firstOrNull {
       it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null)
-    } ?: emptyList()
+    }
 
   private fun Operation.collectInlineParameterTypes(): Map<String, Schema<*>> =
     (parameters ?: emptyList()).associate { parameter ->
@@ -131,7 +131,7 @@ class RequestGenerator(
           replacePathParameter(mutablePath, param.name, param.name.convertToCamelCase())
       }
 
-      val bodyType = requestBody?.content?.values?.first()?.schema?.toKotlinTypeName(operationId)
+      val bodyType = requestBody?.content?.values?.first()?.schema?.toKotlinTypeName(operationId.plus("Request"))
 
       if (bodyType != null) {
         addParameter(
