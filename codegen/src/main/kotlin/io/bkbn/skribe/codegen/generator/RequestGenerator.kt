@@ -110,6 +110,8 @@ class RequestGenerator(
   private fun Operation.collectInlineRequestTypes(): List<Schema<*>> =
     requestBody?.content?.values?.mapNotNull { content ->
       content.schema
+    }?.filter {
+      it.`$ref` == null || (it is ArraySchema && it.items.`$ref` == null)
     } ?: emptyList()
 
   private fun Operation.collectInlineParameterTypes(): Map<String, Schema<*>> =
