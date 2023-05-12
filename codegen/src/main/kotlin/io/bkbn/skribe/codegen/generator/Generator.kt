@@ -18,7 +18,7 @@ import io.bkbn.skribe.codegen.utils.SchemaUtils.isReferenceSchema
 import io.bkbn.skribe.codegen.utils.SchemaUtils.propertiesOrEmpty
 import io.bkbn.skribe.codegen.utils.SchemaUtils.requiredProperties
 import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
-import io.bkbn.skribe.codegen.utils.StringUtils.formatPropertyName
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
 import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
 import io.bkbn.skribe.codegen.utils.StringUtils.sanitizeEnumConstant
 import io.swagger.v3.oas.models.OpenAPI
@@ -34,11 +34,8 @@ import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
-import io.swagger.v3.oas.models.parameters.Parameter
-import io.swagger.v3.oas.models.parameters.RequestBody
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.util.Locale
 
 internal sealed interface Generator {
   val basePackage: String
@@ -59,54 +56,82 @@ internal sealed interface Generator {
     return TypeSpec.classBuilder(name).apply {
       addModifiers(KModifier.DATA)
       addAnnotation(Serializable::class)
-      primaryConstructor(
-        FunSpec.constructorBuilder().apply {
-          addParameters(
-            propertiesOrEmpty.map { (name, schema) ->
-              val formattedName = name.formatPropertyName()
-              ParameterSpec.builder(
-                formattedName,
-                schema.toKotlinTypeName(name, typeName).copy(nullable = name !in requiredProperties)
-              ).apply {
-                if (schema is UUIDSchema) {
-                  addAnnotation(
-                    AnnotationSpec.builder(Serializable::class).apply {
-                      addMember("%T::class", uuidSerializerClassName)
-                    }.build()
-                  )
-                }
-                if (formattedName != name) {
-                  addAnnotation(
-                    AnnotationSpec.builder(SerialName::class).apply {
-                      addMember("%S", name)
-                    }.build()
-                  )
-                }
-              }.build()
-            }
-          )
-        }.build()
-      )
-
-      addProperties(
-        propertiesOrEmpty.map { (name, schema) ->
-          val formattedName = name.formatPropertyName()
-          PropertySpec.builder(
-            formattedName,
-            schema.toKotlinTypeName(formattedName, typeName).copy(nullable = name !in requiredProperties)
-          )
-            .apply {
-              initializer(formattedName)
-            }.build()
-        }
-      )
-
-      propertiesOrEmpty.filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
-        .forEach { (name, schema) ->
-          val formattedName = name.formatPropertyName()
-          addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
-        }
+      createPrimaryConstructor(this@toKotlinTypeSpec, typeName)
+      addSchemaProperties(this@toKotlinTypeSpec, typeName)
+      attachInlineClasses(this@toKotlinTypeSpec, typeName)
     }.build()
+  }
+
+  private fun TypeSpec.Builder.createPrimaryConstructor(schema: Schema<*>, typeName: ClassName) {
+    primaryConstructor(
+      FunSpec.constructorBuilder().apply {
+        addParameters(
+          schema.propertiesOrEmpty.map { (propName, propSchema) ->
+            val formattedName = propName.convertToCamelCase()
+            ParameterSpec.builder(
+              formattedName,
+              propSchema.toKotlinTypeName(propName, typeName).copy(nullable = propName !in schema.requiredProperties)
+            ).apply {
+              if (propSchema is UUIDSchema) {
+                addAnnotation(
+                  AnnotationSpec.builder(Serializable::class).apply {
+                    addMember("%T::class", uuidSerializerClassName)
+                  }.build()
+                )
+              }
+              if (formattedName != propName) {
+                addAnnotation(
+                  AnnotationSpec.builder(SerialName::class).apply {
+                    addMember("%S", propName)
+                  }.build()
+                )
+              }
+            }.build()
+          }
+        )
+      }.build()
+    )
+  }
+
+  private fun TypeSpec.Builder.addSchemaProperties(schema: Schema<*>, typeName: ClassName) {
+    addProperties(
+      schema.propertiesOrEmpty.map { (name, schema) ->
+        val formattedName = name.convertToCamelCase()
+        PropertySpec.builder(
+          formattedName,
+          schema.toKotlinTypeName(formattedName, typeName).copy(nullable = name !in schema.requiredProperties)
+        ).apply {
+          initializer(formattedName)
+        }.build()
+      }
+    )
+  }
+
+  private fun TypeSpec.Builder.attachInlineClasses(parentSchema: Schema<*>, typeName: ClassName) {
+    parentSchema.propertiesOrEmpty.filterValues { it is ObjectSchema || (it is StringSchema && it.enumConstants.isNotEmpty()) }
+      .forEach { (name, schema) ->
+        val formattedName = name.convertToCamelCase()
+        addType(schema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
+
+    parentSchema.propertiesOrEmpty.filterValues { it is ArraySchema && (it.items is ObjectSchema || it.items.enumConstants.isNotEmpty()) }
+      .forEach { (name, schema) ->
+        val itemSchema = schema.items
+        val formattedName = name.convertToCamelCase()
+        addType(itemSchema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
+
+    parentSchema.propertiesOrEmpty
+      .filterValues {
+        it is MapSchema &&
+          (it.additionalProperties is ObjectSchema ||
+            (it.additionalProperties as Schema<*>).enumConstants.isNotEmpty())
+      }
+      .forEach { (name, schema) ->
+        val additionalPropertySchema = schema.additionalProperties as Schema<*>
+        val formattedName = name.convertToCamelCase()
+        addType(additionalPropertySchema.toKotlinTypeSpec(name = formattedName.capitalized(), parentType = typeName))
+      }
   }
 
   fun emptyObjectType(name: String) = TypeSpec.objectBuilder(name).apply {

@@ -12,7 +12,7 @@ import com.squareup.kotlinpoet.asTypeName
 import io.bkbn.skribe.codegen.utils.SchemaUtils.enumConstants
 import io.bkbn.skribe.codegen.utils.SchemaUtils.safeRequired
 import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
-import io.bkbn.skribe.codegen.utils.StringUtils.formattedParamName
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
 import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
 import io.bkbn.skribe.codegen.utils.StringUtils.sanitizePropertyName
 import io.bkbn.skribe.codegen.utils.StringUtils.snakeToCamel
@@ -126,7 +126,7 @@ class RequestGenerator(
 
       pathParams.forEach { param ->
         mutablePath =
-          replacePathParameter(mutablePath, param.name, param.name.formattedParamName())
+          replacePathParameter(mutablePath, param.name, param.name.convertToCamelCase())
       }
 
       val bodyType = requestBody?.content?.values?.first()?.schema?.toKotlinTypeName(operationId)
@@ -167,12 +167,12 @@ class RequestGenerator(
       addParameter(
         if (parameter.schema is StringSchema && parameter.schema.enumConstants.isNotEmpty()) {
           ParameterSpec.builder(
-            parameter.name.formattedParamName(),
+            parameter.name.convertToCamelCase(),
             ClassName(modelPackage, operation.operationId.capitalized().plus(parameter.name.capitalized()))
           ).build()
         } else {
           ParameterSpec.builder(
-            parameter.name.formattedParamName(),
+            parameter.name.convertToCamelCase(),
             parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
           ).build()
         }
@@ -186,11 +186,11 @@ class RequestGenerator(
         beginControlFlow("url")
         parameters.forEach { param ->
           if (param.safeRequired) {
-            addStatement("parameters.append(%S, %L.toString())", param.name, param.name.formattedParamName())
+            addStatement("parameters.append(%S, %L.toString())", param.name, param.name.convertToCamelCase())
           } else {
             addStatement(
               "%L?.let { parameters.append(%S, it.toString()) }",
-              param.name.formattedParamName(),
+              param.name.convertToCamelCase(),
               param.name
             )
           }
