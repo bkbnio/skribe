@@ -1,6 +1,5 @@
 package io.bkbn.skribe.codegen.generator
 
-import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -150,7 +149,7 @@ internal sealed interface Generator {
   @Suppress("CyclomaticComplexMethod")
   fun Schema<*>.toKotlinTypeName(operationId: String): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(operationId))
-    is UUIDSchema -> Uuid::class.asTypeName()
+    is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
     is NumberSchema -> Int::class.asTypeName()
@@ -188,7 +187,7 @@ internal sealed interface Generator {
       }
     }
 
-    is UUIDSchema -> Uuid::class.asTypeName()
+    is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
     is NumberSchema -> Int::class.asTypeName()
@@ -255,7 +254,7 @@ internal sealed interface Generator {
 
   fun FileSpec.Builder.addSchemaType(name: String, schema: Schema<*>) {
     when (schema) {
-      is UUIDSchema -> addTypeAlias(TypeAliasSpec.builder(name, Uuid::class).build())
+      is UUIDSchema -> addTypeAlias(TypeAliasSpec.builder(name, ClassName("com.benasher44.uuid", "Uuid")).build())
       is DateTimeSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build()) // Needs work
       is IntegerSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
       is NumberSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
