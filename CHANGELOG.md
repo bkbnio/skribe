@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 05/18/2023
+
+### Changed
+
+- Fixed bug where enums with modified constants were not serialized properly
+
 ## [0.2.4] - 05/13/2023
 
 ### Changed
