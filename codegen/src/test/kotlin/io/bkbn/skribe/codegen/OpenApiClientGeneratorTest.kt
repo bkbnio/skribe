@@ -5,6 +5,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.bkbn.skribe.codegen.generator.ApiClientGenerator
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createTempDirectory
@@ -67,6 +68,31 @@ class OpenApiClientGeneratorTest : DescribeSpec({
 
       // Assert
       result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+  }
+  describe("Property Manipulation") {
+    it("Can attach the proper annotations to a modified enum") {
+      // Arrange
+      val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+
+      // Act
+      val content = files.find { it.name == "BranchState" }.toString().trim()
+
+      // Assert
+      content shouldBeEqual """
+        package tech.neon.client.models
+
+        import kotlinx.serialization.SerialName
+        import kotlinx.serialization.Serializable
+
+        @Serializable
+        public enum class BranchState {
+          @SerialName("init")
+          INIT,
+          @SerialName("ready")
+          READY,
+        }
+      """.trimIndent()
     }
   }
 }) {

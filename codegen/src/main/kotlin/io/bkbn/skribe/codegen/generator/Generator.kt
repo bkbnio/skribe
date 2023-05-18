@@ -217,7 +217,22 @@ internal sealed interface Generator {
       this@toEnumType.enumConstants
         .filterNot { it == "null" }
         .filterNot { it.isBlank() }
-        .forEach { addEnumConstant(it.sanitizeEnumConstant()) }
+        .forEach {
+          if (it != it.sanitizeEnumConstant()) {
+            addEnumConstant(
+              it.sanitizeEnumConstant(),
+              TypeSpec.anonymousClassBuilder().apply {
+                addAnnotation(
+                  AnnotationSpec.builder(SerialName::class).apply {
+                    addMember("\"$it\"")
+                  }.build()
+                )
+              }.build()
+            )
+          } else {
+            addEnumConstant(it.sanitizeEnumConstant())
+          }
+        }
     }.build()
   }
 
