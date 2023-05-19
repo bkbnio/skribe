@@ -132,7 +132,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
 
         public object NumberSerializer : KSerializer<Number> {
           public override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Number",
-              PrimitiveKind.Double)
+              PrimitiveKind.DOUBLE)
 
           public override fun deserialize(decoder: Decoder): Number = try {
             decoder.decodeDouble()

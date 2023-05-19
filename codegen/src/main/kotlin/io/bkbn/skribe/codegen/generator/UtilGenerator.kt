@@ -74,7 +74,7 @@ class UtilGenerator(override val basePackage: String, override val openApi: Open
           PropertySpec.builder("descriptor", SerialDescriptor::class).apply {
             addModifiers(KModifier.OVERRIDE)
             val psd = MemberName("kotlinx.serialization.descriptors", "PrimitiveSerialDescriptor")
-            initializer("%M(%S, %T.Double)", psd, "Number", PrimitiveKind::class)
+            initializer("%M(%S, %T.DOUBLE)", psd, "Number", PrimitiveKind::class)
           }.build()
         )
         addFunction(
