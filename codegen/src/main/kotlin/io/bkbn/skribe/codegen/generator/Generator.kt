@@ -87,6 +87,16 @@ internal sealed interface Generator {
                   }.build()
                 )
               }
+              if (propSchema is NumberSchema ||
+                openApi.components.schemas?.get(propSchema.`$ref`?.getRefKey()) is NumberSchema
+              ) {
+                addAnnotation(
+                  AnnotationSpec.builder(Serializable::class).apply {
+                    val numberSerializerClassName = ClassName(utilPackage, "NumberSerializer")
+                    addMember("with = %T::class", numberSerializerClassName)
+                  }.build()
+                )
+              }
             }.build()
           }
         )
@@ -152,7 +162,7 @@ internal sealed interface Generator {
     is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
-    is NumberSchema -> Int::class.asTypeName()
+    is NumberSchema -> Number::class.asTypeName()
     is StringSchema -> {
       when {
         enumConstants.isNotEmpty() -> ClassName(modelPackage, operationId.capitalized())
@@ -190,7 +200,7 @@ internal sealed interface Generator {
     is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
     is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
     is IntegerSchema -> Int::class.asTypeName()
-    is NumberSchema -> Int::class.asTypeName()
+    is NumberSchema -> Number::class.asTypeName()
     is StringSchema -> {
       when {
         this.enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
@@ -271,8 +281,8 @@ internal sealed interface Generator {
     when (schema) {
       is UUIDSchema -> addTypeAlias(TypeAliasSpec.builder(name, ClassName("com.benasher44.uuid", "Uuid")).build())
       is DateTimeSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build()) // Needs work
-      is IntegerSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
-      is NumberSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build()) // Needs work
+      is IntegerSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build())
+      is NumberSchema -> addTypeAlias(TypeAliasSpec.builder(name, Number::class).build())
       is ComposedSchema -> addType(schema.createComposedKotlinType(name))
       is StringSchema -> {
         when {
