@@ -109,6 +109,8 @@ class OpenApiClientGeneratorTest : DescribeSpec({
 
         import com.benasher44.uuid.Uuid
         import com.benasher44.uuid.uuidFrom
+        import java.lang.NumberFormatException
+        import kotlin.Number
         import kotlin.Unit
         import kotlinx.serialization.KSerializer
         import kotlinx.serialization.descriptors.PrimitiveKind
@@ -124,6 +126,21 @@ class OpenApiClientGeneratorTest : DescribeSpec({
           public override fun deserialize(decoder: Decoder): Uuid = uuidFrom(decoder.decodeString())
 
           public override fun serialize(encoder: Encoder, `value`: Uuid): Unit {
+            encoder.encodeString(value.toString())
+          }
+        }
+
+        public object NumberSerializer : KSerializer<Number> {
+          public override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Number",
+              PrimitiveKind.DOUBLE)
+
+          public override fun deserialize(decoder: Decoder): Number = try {
+            decoder.decodeDouble()
+          } catch (e: NumberFormatException) {
+            decoder.decodeInt()
+          }
+
+          public override fun serialize(encoder: Encoder, `value`: Number): Unit {
             encoder.encodeString(value.toString())
           }
         }
