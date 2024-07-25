@@ -631,7 +631,7 @@ components:
             - document_type: identity_verification
               document_sub_type: passport
               id: d5af1585-6c60-494d-9ea5-c5df62704229
-              content: 'lol redacted cuz of github secret scanning... wonder if this is a real leaked cred'
+              content: 'lol redacted cuz github is dumb'
               created_at: '2022-01-21T21:25:28.184231Z'
           trusted_contact:
             given_name: Jane
