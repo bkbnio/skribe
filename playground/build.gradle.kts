@@ -13,6 +13,7 @@ dependencies {
   val uuidVersion: String by project
 
   implementation(projects.skribeCodegen)
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
   implementation("io.ktor:ktor-client-core:$ktorVersion")
   implementation("io.ktor:ktor-client-cio:$ktorVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
@@ -28,7 +29,7 @@ sourceSets {
 }
 
 skribe {
-  specUrl.set(file("../codegen/src/test/resources/docker.json").absoluteFile.toString())
+  specUrl.set(file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString())
   outputDir.set("$projectDir/src/main/gen")
   basePackage.set("io.bkbn.sourdough.clients")
   shouldCleanDir.set(true)

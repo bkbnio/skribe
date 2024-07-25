@@ -20,7 +20,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
 
       // Assert
-      files shouldHaveSize 123
+      files shouldHaveSize 188
     }
     it("Can generate the client for the Docker Engine API") {
       // Act
@@ -28,6 +28,13 @@ class OpenApiClientGeneratorTest : DescribeSpec({
 
       // Assert
       files shouldHaveSize 274
+    }
+    it("Can generate the client for the Alpaca Broker API") {
+      // Act
+      val files = ApiClientGenerator.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
+
+      // Assert
+      files shouldHaveSize 181
     }
   }
   describe("Code Compilation") {

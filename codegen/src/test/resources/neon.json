@@ -7,7 +7,7 @@
   ],
   "info": {
     "title": "Neon API",
-    "description": "The Neon API allows you to access and manage Neon programmatically. You can use the Neon API to manage API keys, projects, branches, endpoints, databases, roles, and operations. For information about these features, refer to the [Neon documentation](https://neon.tech/docs/manage/overview/).\n\nYou can run Neon API requests from this API reference using the **Try it out** feature that is provided for each method. Click **Authorize** to enter an API key.\n\nYou can create and manage API keys in the Neon Console. See [Manage API keys](https://neon.tech/docs/manage/api-keys/) for instructions.",
+    "description": "The Neon API allows you to access and manage Neon programmatically. You can use the Neon API to manage API keys, projects, branches, compute endpoints, databases, roles, and operations. For information about these features, refer to the [Neon documentation](https://neon.tech/docs/manage/overview/).\n\nYou can run Neon API requests from this API reference using the **Try It** feature. Enter your API key as a **Bearer** token in the **Authoization** section of the page.\n\nYou can create and manage API keys in the Neon Console. See [Manage API keys](https://neon.tech/docs/manage/api-keys/) for instructions.",
     "version": "v2",
     "contact": {
       "email": "support@neon.tech"
@@ -19,6 +19,9 @@
   "security": [
     {
       "BearerAuth": []
+    },
+    {
+      "CookieAuth": []
     }
   ],
   "tags": [
@@ -44,35 +47,18 @@
     },
     {
       "name": "Preview",
-      "description": "New API methods that are in Beta / Preview state and could be subjected to significant changes in the future."
+      "description": "New API methods that are in a Preview state and may be subject to changes."
+    },
+    {
+      "name": "Users",
+      "description": "These methods allow you to manage your Neon user account."
+    },
+    {
+      "name": "Consumption",
+      "description": "These methods allow you to view consumption details for your Neon account."
     }
   ],
   "paths": {
-    "/projects/{project_id}/applications/vercel": {
-      "parameters": [
-        {
-          "name": "project_id",
-          "description": "Neon project ID",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        }
-      ]
-    },
-    "/applications/oauth/{client_id}": {
-      "parameters": [
-        {
-          "name": "client_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        }
-      ]
-    },
     "/api_keys": {
       "get": {
         "summary": "Get a list of API keys",
@@ -146,7 +132,9 @@
                 },
                 "example": {
                   "id": 165434,
-                  "key": "9v1faketcjbl4sn1013keyd43n2a8qlfakeog8yvp40hx16keyjo1bpds4y2dfms3"
+                  "key": "9v1faketcjbl4sn1013keyd43n2a8qlfakeog8yvp40hx16keyjo1bpds4y2dfms3",
+                  "name": "mykey_1",
+                  "created_at": "2022-11-15T20:13:35Z"
                 }
               }
             }
@@ -248,7 +236,8 @@
                     "status": "finished",
                     "failures_count": 0,
                     "created_at": "2022-10-04T18:20:17Z",
-                    "updated_at": "2022-10-04T18:20:18Z"
+                    "updated_at": "2022-10-04T18:20:18Z",
+                    "total_duration_ms": 100
                   }
                 }
               }
@@ -271,6 +260,190 @@
         "parameters": [
           {
             "name": "cursor",
+            "description": "Specify the cursor value from the previous response to retrieve the next batch of projects.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Specify a value from 1 to 400 to limit number of projects in the response.",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "maximum": 400
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search by project `name` or `id`. You can specify partial `name` or `id` values to filter results.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "org_id",
+            "description": "Search for projects by `org_id`.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returned a list of projects for the Neon account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ProjectsResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  ]
+                },
+                "example": {
+                  "projects": [
+                    {
+                      "id": "shiny-wind-028834",
+                      "platform_id": "aws",
+                      "region_id": "aws-us-east-2",
+                      "name": "shiny-wind-028834",
+                      "provisioner": "k8s-pod",
+                      "pg_version": 15,
+                      "created_at": "2022-11-23T17:42:25Z",
+                      "updated_at": "2022-11-23T17:42:25Z",
+                      "proxy_host": "us-east-2.aws.neon.tech",
+                      "cpu_used_sec": 0,
+                      "branch_logical_size_limit": 0,
+                      "owner_id": "1232111",
+                      "creation_source": "console",
+                      "store_passwords": true,
+                      "branch_logical_size_limit_bytes": 10800,
+                      "active_time": 100
+                    },
+                    {
+                      "id": "winter-boat-259881",
+                      "platform_id": "aws",
+                      "region_id": "aws-us-east-2",
+                      "name": "winter-boat-259881",
+                      "provisioner": "k8s-pod",
+                      "pg_version": 15,
+                      "created_at": "2022-11-23T17:52:25Z",
+                      "updated_at": "2022-11-23T17:52:25Z",
+                      "proxy_host": "us-east-2.aws.neon.tech",
+                      "cpu_used_sec": 0,
+                      "branch_logical_size_limit": 0,
+                      "owner_id": "1232111",
+                      "creation_source": "console",
+                      "store_passwords": true,
+                      "branch_logical_size_limit_bytes": 10800,
+                      "active_time": 100,
+                      "org_id": "org-morning-bread-81040908"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a project",
+        "description": "Creates a Neon project.\nA project is the top-level object in the Neon object hierarchy.\nPlan limits define how many projects you can create.\nNeon's Free plan permits one project per Neon account.\nFor more information, see [Manage projects](https://neon.tech/docs/manage/projects/).\n\nYou can specify a region and Postgres version in the request body.\nNeon currently supports PostgreSQL 14, 15, and 16.\nFor supported regions and `region_id` values, see [Regions](https://neon.tech/docs/introduction/regions/).\n",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "createProject",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreateRequest"
+              },
+              "examples": {
+                "required_attributes_only": {
+                  "summary": "Required attributes only",
+                  "value": {
+                    "project": {
+                      "name": "myproject"
+                    }
+                  }
+                },
+                "commonly_specified_attributes": {
+                  "summary": "Commonly-specified attributes",
+                  "value": {
+                    "project": {
+                      "name": "myproject",
+                      "region_id": "aws-us-east-2",
+                      "pg_version": 15
+                    }
+                  }
+                },
+                "with_autoscaling": {
+                  "summary": "With autoscaling attributes",
+                  "value": {
+                    "project": {
+                      "name": "myproject",
+                      "region_id": "aws-us-east-2",
+                      "pg_version": 15,
+                      "autoscaling_limit_min_cu": 0.25,
+                      "autoscaling_limit_max_cu": 1,
+                      "provisioner": "k8s-neonvm"
+                    }
+                  }
+                },
+                "with_branch_attributes": {
+                  "summary": "With branch attributes",
+                  "value": {
+                    "project": {
+                      "name": "myproject",
+                      "region_id": "aws-us-east-2",
+                      "pg_version": 15,
+                      "branch": {
+                        "name": "mybranch",
+                        "role_name": "sally",
+                        "database_name": "mydb"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/CreatedProject"
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/projects/shared": {
+      "get": {
+        "summary": "Get a list of shared projects",
+        "description": "Retrieves a list of shared projects for the Neon account.\nA project is the top-level object in the Neon object hierarchy.\nFor more information, see [Manage projects](https://neon.tech/docs/manage/projects/).\n",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "listSharedProjects",
+        "parameters": [
+          {
+            "name": "cursor",
             "description": "Specify the cursor value from the previous response to get the next batch of projects.",
             "in": "query",
             "schema": {
@@ -279,19 +452,27 @@
           },
           {
             "name": "limit",
-            "description": "Specify a value from 1 to 100 to limit number of projects in the response.",
+            "description": "Specify a value from 1 to 400 to limit number of projects in the response.",
             "in": "query",
             "schema": {
               "type": "integer",
               "minimum": 1,
               "default": 10,
-              "maximum": 100
+              "maximum": 400
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search query by name or id.",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Returned a list of projects for the Neon account",
+            "description": "Returned a list of shared projects for the Neon account",
             "content": {
               "application/json": {
                 "schema": {
@@ -351,52 +532,6 @@
             "$ref": "#/components/responses/GeneralError"
           }
         }
-      },
-      "post": {
-        "summary": "Create a project",
-        "description": "Creates a Neon project.\nA project is the top-level object in the Neon object hierarchy.\nPlan limits define how many projects you can create.\nNeon's Free plan permits one project per Neon account.\nFor more information, see [Manage projects](https://neon.tech/docs/manage/projects/).\n\nYou can specify a region and PostgreSQL version in the request body.\nNeon currently supports PostgreSQL 14 and 15.\nFor supported regions and `region_id` values, see [Regions](https://neon.tech/docs/introduction/regions/).\n",
-        "tags": [
-          "Project"
-        ],
-        "operationId": "createProject",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProjectCreateRequest"
-              },
-              "examples": {
-                "required_attributes_only": {
-                  "summary": "Required attributes only",
-                  "value": {
-                    "project": {
-                      "name": "myproject"
-                    }
-                  }
-                },
-                "commonly_specified_attributes": {
-                  "summary": "Commonly-specified attributes",
-                  "value": {
-                    "project": {
-                      "name": "myproject",
-                      "region_id": "aws-us-east-2",
-                      "pg_version": 15
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/CreatedProject"
-          },
-          "default": {
-            "$ref": "#/components/responses/GeneralError"
-          }
-        }
       }
     },
     "/projects/{project_id}": {
@@ -441,6 +576,11 @@
                     "branch_logical_size_limit": 0,
                     "cpu_used_sec": 10,
                     "owner_id": "1232111",
+                    "owner": {
+                      "email": "some@email.com",
+                      "branches_limit": 10,
+                      "subscription_type": "scale"
+                    },
                     "creation_source": "console",
                     "store_passwords": true,
                     "branch_logical_size_limit_bytes": 10500,
@@ -489,7 +629,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectOperations"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ProjectResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OperationsResponse"
+                    }
+                  ]
                 },
                 "example": {
                   "operations": [],
@@ -625,18 +772,6 @@
         }
       }
     },
-    "/projects/{project_id}/saved_queries": {
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        }
-      ]
-    },
     "/projects/{project_id}/permissions": {
       "parameters": [
         {
@@ -647,7 +782,63 @@
             "type": "string"
           }
         }
-      ]
+      ],
+      "get": {
+        "summary": "List project access",
+        "description": "Retrieves details about users who have access to the project, including the permission `id`, the granted-to email address, and the date project access was granted.",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "listProjectPermissions",
+        "responses": {
+          "200": {
+            "description": "Returned project access details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectPermissions"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Grant project access",
+        "description": "Grants project access to the account associated with the specified email address",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "grantPermissionToProject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantPermissionToProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Granted project access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectPermission"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
     },
     "/projects/{project_id}/permissions/{permission_id}": {
       "parameters": [
@@ -667,20 +858,111 @@
             "type": "string"
           }
         }
-      ]
-    },
-    "/saved_queries/{saved_query_id}": {
-      "parameters": [
-        {
-          "name": "saved_query_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "format": "int64"
+      ],
+      "delete": {
+        "summary": "Revoke project access",
+        "description": "Revokes project access from the user associted with the specified permisison `id`. You can retrieve a user's permission `id` by listing project access.",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "revokePermissionFromProject",
+        "responses": {
+          "200": {
+            "description": "Revoked project access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectPermission"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
           }
         }
-      ]
+      }
+    },
+    "/projects/{project_id}/connection_uri": {
+      "get": {
+        "summary": "Get a connection URI",
+        "description": "Retrieves a connection URI for the specified database.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `database_name` by listing the databases for a branch.\nYou can obtain a `role_name` by listing the roles for a branch.\n",
+        "tags": [
+          "Project"
+        ],
+        "operationId": "getConnectionURI",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "description": "The Neon project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branch_id",
+            "in": "query",
+            "description": "The branch ID. Defaults to your project's default `branch_id` if not specified.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endpoint_id",
+            "in": "query",
+            "description": "The endpoint ID. Defaults to the read-write `endpoint_id` associated with the `branch_id` if not specified.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "database_name",
+            "in": "query",
+            "description": "The database name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role_name",
+            "in": "query",
+            "description": "The role name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pooled",
+            "in": "query",
+            "description": "Adds the `-pooler` option to the connection URI when set to `true`, creating a pooled connection URI.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returned the connection URI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionURIResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
     },
     "/projects/{project_id}/branches": {
       "parameters": [
@@ -696,7 +978,7 @@
       ],
       "post": {
         "summary": "Create a branch",
-        "description": "Creates a branch in the specified project.\nYou can obtain a `project_id` by listing the projects for your Neon account.\n\nThis method does not require a request body, but you can specify one to create an endpoint for the branch or to select a non-default parent branch.\nThe default behavior is to create a branch from the project's root branch (`main`) with no endpoint, and the branch name is auto-generated.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
+        "description": "Creates a branch in the specified project.\nYou can obtain a `project_id` by listing the projects for your Neon account.\n\nThis method does not require a request body, but you can specify one to create a compute endpoint for the branch or to select a non-default parent branch.\nThe default behavior is to create a branch from the project's default branch with no compute endpoint, and the branch name is auto-generated.\nThere is a maximum of one read-write endpoint per branch.\nA branch can have multiple read-only endpoints.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
         "tags": [
           "Branch"
         ],
@@ -758,7 +1040,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchesResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BranchesResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AnnotationsMapResponse"
+                    }
+                  ]
                 },
                 "example": {
                   "branches": [
@@ -776,6 +1065,8 @@
                       "active_time_seconds": 100,
                       "cpu_used_sec": 100,
                       "primary": true,
+                      "default": true,
+                      "protected": false,
                       "creation_source": "console"
                     },
                     {
@@ -794,6 +1085,8 @@
                       "active_time_seconds": 100,
                       "cpu_used_sec": 100,
                       "primary": true,
+                      "default": true,
+                      "protected": false,
                       "creation_source": "console"
                     },
                     {
@@ -812,9 +1105,24 @@
                       "active_time_seconds": 100,
                       "cpu_used_sec": 100,
                       "primary": true,
+                      "default": true,
+                      "protected": false,
                       "creation_source": "console"
                     }
-                  ]
+                  ],
+                  "annotations": {
+                    "br-aged-salad-637688": {
+                      "object": {
+                        "type": "console/branch",
+                        "id": "br-aged-salad-637688"
+                      },
+                      "value": {
+                        "vercel-commit-ref": "test"
+                      },
+                      "created_at": "2022-11-23T17:42:25Z",
+                      "updated_at": "2022-11-23T17:42:26Z"
+                    }
+                  }
                 }
               }
             }
@@ -848,7 +1156,7 @@
       ],
       "get": {
         "summary": "Get branch details",
-        "description": "Retrieves information about the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain a `branch_id` by listing the project's branches.\nA `branch_id` value has a `br-` prefix.\n\nEach Neon project has a root branch named `main`.\nA project may contain child branches that were branched from `main` or from another branch.\nA parent branch is identified by a `parent_id` value, which is the `id` of the parent branch.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
+        "description": "Retrieves information about the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain a `branch_id` by listing the project's branches.\nA `branch_id` value has a `br-` prefix.\n\nEach Neon project is initially created with a root and default branch named `main`.\nA project can contain one or more branches.\nA parent branch is identified by a `parent_id` value, which is the `id` of the parent branch.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
         "tags": [
           "Branch"
         ],
@@ -859,7 +1167,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BranchResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AnnotationResponse"
+                    }
+                  ]
                 },
                 "example": {
                   "branch": {
@@ -876,7 +1191,20 @@
                     "active_time_seconds": 100,
                     "cpu_used_sec": 100,
                     "primary": true,
+                    "default": true,
+                    "protected": false,
                     "creation_source": "console"
+                  },
+                  "annotation": {
+                    "object": {
+                      "type": "console/branch",
+                      "id": "br-aged-salad-637688"
+                    },
+                    "value": {
+                      "vercel-commit-ref": "test"
+                    },
+                    "created_at": "2022-11-23T17:42:25Z",
+                    "updated_at": "2022-11-23T17:42:26Z"
                   }
                 }
               }
@@ -889,7 +1217,7 @@
       },
       "delete": {
         "summary": "Delete a branch",
-        "description": "Deletes the specified branch from a project, and places\nall endpoints into an idle state, breaking existing client connections.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain a `branch_id` by listing the project's branches.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n\nWhen a successful response status is received, the endpoints are still active,\nand the branch is not yet deleted from storage.\nThe deletion occurs after all operations finish.\nYou cannot delete a branch if it is the only remaining branch in the project.\nA project must have at least one branch.\n",
+        "description": "Deletes the specified branch from a project, and places\nall compute endpoints into an idle state, breaking existing client connections.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain a `branch_id` by listing the project's branches.\nFor related information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n\nWhen a successful response status is received, the compute endpoints are still active,\nand the branch is not yet deleted from storage.\nThe deletion occurs after all operations finish.\nYou cannot delete a project's root or default branch, and you cannot delete a branch that has a child branch.\nA project must have at least one branch.\n",
         "tags": [
           "Branch"
         ],
@@ -917,6 +1245,8 @@
                     "active_time_seconds": 100,
                     "cpu_used_sec": 100,
                     "primary": true,
+                    "default": true,
+                    "protected": false,
                     "creation_source": "console"
                   },
                   "operations": [
@@ -929,7 +1259,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:53:05Z",
-                      "updated_at": "2022-12-01T19:53:05Z"
+                      "updated_at": "2022-12-01T19:53:05Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "b6afbc21-2990-4a76-980b-b57d8c2948f2",
@@ -939,7 +1270,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:53:05Z",
-                      "updated_at": "2022-12-01T19:53:05Z"
+                      "updated_at": "2022-12-01T19:53:05Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -956,7 +1288,7 @@
           "Branch"
         ],
         "summary": "Update a branch",
-        "description": "Updates the specified branch. Only changing the branch name is supported.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor more information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
+        "description": "Updates the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor more information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
         "operationId": "updateProjectBranch",
         "requestBody": {
           "content": {
@@ -997,9 +1329,146 @@
                     "active_time_seconds": 100,
                     "cpu_used_sec": 100,
                     "primary": true,
+                    "default": true,
+                    "protected": false,
                     "creation_source": "console"
                   },
                   "operations": []
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/branches/{branch_id}/restore": {
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "summary": "Restore a branch",
+        "description": "Restores a branch to an earlier state in its own or another branch's history",
+        "operationId": "restoreProjectBranch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "description": "The Neon project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branch_id",
+            "in": "path",
+            "description": "The branch ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BranchRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated the specified branch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchOperations"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/branches/{branch_id}/schema": {
+      "get": {
+        "tags": [
+          "Branch"
+        ],
+        "summary": "Get the database schema",
+        "description": "Retrieves the schema from the specified database. The `lsn` and `timestamp` values cannot be specified at the same time. If both are omitted, the database schema is retrieved from database's head .",
+        "operationId": "getProjectBranchSchema",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "description": "The Neon project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branch_id",
+            "in": "path",
+            "description": "The branch ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "The role on whose behalf the schema is retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "db_name",
+            "in": "query",
+            "description": "Name of the database for which the schema is retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lsn",
+            "in": "query",
+            "description": "The Log Sequence Number (LSN) for which the schema is retrieved\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "description": "The point in time for which the schema is retrieved\n",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schema definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchSchemaResponse"
                 }
               }
             }
@@ -1035,8 +1504,9 @@
         "tags": [
           "Branch"
         ],
-        "summary": "Set the branch as the primary branch of a project",
-        "description": "The primary mark is automatically removed from the previous primary branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor more information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
+        "summary": "Set branch as primary",
+        "deprecated": true,
+        "description": "DEPRECATED. Use `/set_as_default` endpoint.\nSets the specified branch as the project's primary branch.\nThe primary designation is automatically removed from the previous primary branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor more information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
         "operationId": "setPrimaryProjectBranch",
         "responses": {
           "200": {
@@ -1062,6 +1532,75 @@
                     "created_at": "2022-11-23T17:42:25Z",
                     "updated_at": "2022-11-23T17:42:26Z",
                     "primary": true,
+                    "default": true,
+                    "protected": false,
+                    "creation_source": "console"
+                  },
+                  "operations": []
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/branches/{branch_id}/set_as_default": {
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "description": "The Neon project ID",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "branch_id",
+          "in": "path",
+          "description": "The branch ID",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "summary": "Set branch as default",
+        "description": "Sets the specified branch as the project's default branch.\nThe default designation is automatically removed from the previous default branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor more information, see [Manage branches](https://neon.tech/docs/manage/branches/).\n",
+        "operationId": "setDefaultProjectBranch",
+        "responses": {
+          "200": {
+            "description": "Updated the specified branch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchOperations"
+                },
+                "example": {
+                  "branch": {
+                    "cpu_used_sec": 1,
+                    "active_time_seconds": 1,
+                    "compute_time_seconds": 1,
+                    "written_data_bytes": 100,
+                    "data_transfer_bytes": 100,
+                    "id": "br-icy-dream-250089",
+                    "project_id": "shiny-wind-028834",
+                    "parent_id": "br-aged-salad-637688",
+                    "parent_lsn": "0/1E19478",
+                    "name": "mybranch",
+                    "current_state": "ready",
+                    "created_at": "2022-11-23T17:42:25Z",
+                    "updated_at": "2022-11-23T17:42:26Z",
+                    "primary": true,
+                    "default": true,
+                    "protected": false,
                     "creation_source": "console"
                   },
                   "operations": []
@@ -1098,7 +1637,7 @@
       ],
       "get": {
         "summary": "Get a list of branch endpoints",
-        "description": "Retrieves a list of endpoints for the specified branch.\nCurrently, Neon permits only one endpoint per branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\n",
+        "description": "Retrieves a list of compute endpoints for the specified branch.\nNeon permits only one read-write compute endpoint per branch.\nA branch can have multiple read-only compute endpoints.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\n",
         "tags": [
           "Branch"
         ],
@@ -1263,7 +1802,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-04T00:15:04Z",
-                      "updated_at": "2022-12-04T00:15:04Z"
+                      "updated_at": "2022-12-04T00:15:04Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "b7483d4e-33da-4d40-b319-ac858d4d3e69",
@@ -1274,7 +1814,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-04T00:15:04Z",
-                      "updated_at": "2022-12-04T00:15:04Z"
+                      "updated_at": "2022-12-04T00:15:04Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1319,7 +1860,7 @@
       ],
       "get": {
         "summary": "Get database details",
-        "description": "Retrieves information about the specified database.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` and `database_name` by listing branch's databases.\nFor related information, see [Manage databases](https://neon.tech/docs/manage/databases/).\n",
+        "description": "Retrieves information about the specified database.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` and `database_name` by listing the branch's databases.\nFor related information, see [Manage databases](https://neon.tech/docs/manage/databases/).\n",
         "tags": [
           "Branch"
         ],
@@ -1400,7 +1941,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-04T00:21:01Z",
-                      "updated_at": "2022-12-04T00:21:01Z"
+                      "updated_at": "2022-12-04T00:21:01Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "42dafb46-f861-497b-ae89-f2bec54f4966",
@@ -1411,7 +1953,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-04T00:21:01Z",
-                      "updated_at": "2022-12-04T00:21:01Z"
+                      "updated_at": "2022-12-04T00:21:01Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1425,7 +1968,7 @@
       },
       "delete": {
         "summary": "Delete a database",
-        "description": "Deletes the specified database from the branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` and `database_name` by listing branch's databases.\nFor related information, see [Manage databases](https://neon.tech/docs/manage/databases/).\n",
+        "description": "Deletes the specified database from the branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` and `database_name` by listing the branch's databases.\nFor related information, see [Manage databases](https://neon.tech/docs/manage/databases/).\n",
         "tags": [
           "Branch"
         ],
@@ -1457,7 +2000,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:51:41Z",
-                      "updated_at": "2022-12-01T19:51:41Z"
+                      "updated_at": "2022-12-01T19:51:41Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "42dafb46-f861-497b-ae89-f2bec54f4966",
@@ -1468,7 +2012,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:51:41Z",
-                      "updated_at": "2022-12-01T19:51:41Z"
+                      "updated_at": "2022-12-01T19:51:41Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1504,7 +2049,7 @@
       ],
       "get": {
         "summary": "Get a list of roles",
-        "description": "Retrieves a list of roles from the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Manage users](https://neon.tech/docs/manage/users/).\n",
+        "description": "Retrieves a list of Postgres roles from the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n",
         "tags": [
           "Branch"
         ],
@@ -1545,7 +2090,7 @@
       },
       "post": {
         "summary": "Create a role",
-        "description": "Creates a role in the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Manage users](https://neon.tech/docs/manage/users/).\n\nConnections established to the active read-write endpoint will be dropped.\nIf the read-write endpoint is idle, the endpoint becomes active for a short period of time and is suspended afterward.\n",
+        "description": "Creates a Postgres role in the specified branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n\nConnections established to the active compute endpoint will be dropped.\nIf the compute endpoint is idle, the endpoint becomes active for a short period of time and is suspended afterward.\n",
         "tags": [
           "Branch"
         ],
@@ -1592,7 +2137,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T11:58:29Z",
-                      "updated_at": "2022-12-03T11:58:29Z"
+                      "updated_at": "2022-12-03T11:58:29Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1637,14 +2183,14 @@
       ],
       "get": {
         "summary": "Get role details",
-        "description": "Retrieves details about the specified role.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Managing users](https://neon.tech/docs/manage/users/).\n",
+        "description": "Retrieves details about the specified role.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n",
         "tags": [
           "Branch"
         ],
         "operationId": "getProjectBranchRole",
         "responses": {
           "200": {
-            "description": "Successfully returned details for the specified role",
+            "description": "Returned details for the specified role",
             "content": {
               "application/json": {
                 "schema": {
@@ -1669,7 +2215,7 @@
       },
       "delete": {
         "summary": "Delete a role",
-        "description": "Deletes the specified role from the branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Managing users](https://neon.tech/docs/manage/users/).\n",
+        "description": "Deletes the specified Postgres role from the branch.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n",
         "tags": [
           "Branch"
         ],
@@ -1700,7 +2246,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:48:11Z",
-                      "updated_at": "2022-12-01T19:48:11Z"
+                      "updated_at": "2022-12-01T19:48:11Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "ab94cdad-7630-4943-a55e-5a0952d2e598",
@@ -1711,7 +2258,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-01T19:48:11Z",
-                      "updated_at": "2022-12-01T19:48:11Z"
+                      "updated_at": "2022-12-01T19:48:11Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1756,14 +2304,14 @@
       ],
       "get": {
         "summary": "Get role password",
-        "description": "Retrieves password of the specified role if possible.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Managing users](https://neon.tech/docs/manage/users/).\n",
+        "description": "Retrieves the password for the specified Postgres role, if possible.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n",
         "tags": [
           "Branch"
         ],
         "operationId": "getProjectBranchRolePassword",
         "responses": {
           "200": {
-            "description": "Successfully returned password for the specified role",
+            "description": "Returned password for the specified role",
             "content": {
               "application/json": {
                 "schema": {
@@ -1833,7 +2381,7 @@
       ],
       "post": {
         "summary": "Reset the role password",
-        "description": "Resets the password for the specified role.\nReturns a new password and operations. The new password is ready to use when the last operation finishes.\nThe old password remains valid until last operation finishes.\nConnections to the read-write endpoint are dropped. If idle,\nthe read-write endpoint becomes active for a short period of time.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nIn Neon, the terms \"role\" and \"user\" are synonymous.\nFor related information, see [Managing users](https://neon.tech/docs/manage/users/).\n",
+        "description": "Resets the password for the specified Postgres role.\nReturns a new password and operations. The new password is ready to use when the last operation finishes.\nThe old password remains valid until last operation finishes.\nConnections to the compute endpoint are dropped. If idle,\nthe compute endpoint becomes active for a short period of time.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain the `branch_id` by listing the project's branches.\nYou can obtain the `role_name` by listing the roles for a branch.\nFor related information, see [Manage roles](https://neon.tech/docs/manage/roles/).\n",
         "tags": [
           "Branch"
         ],
@@ -1865,7 +2413,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T12:58:18Z",
-                      "updated_at": "2022-12-03T12:58:18Z"
+                      "updated_at": "2022-12-03T12:58:18Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "16b5bfca-4697-4194-a338-d2cdc9aca2af",
@@ -1876,7 +2425,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-03T12:58:18Z",
-                      "updated_at": "2022-12-03T12:58:18Z"
+                      "updated_at": "2022-12-03T12:58:18Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -1902,8 +2452,8 @@
         }
       ],
       "post": {
-        "summary": "Create an endpoint",
-        "description": "Creates an endpoint for the specified branch.\nAn endpoint is a Neon compute instance.\nThere is a maximum of one endpoint per branch.\nIf the specified branch already has an endpoint, the operation fails.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain `branch_id` by listing the project's branches.\nA `branch_id` has a `br-` prefix.\nCurrently, only the `read_write` endpoint type is supported.\nFor supported regions and `region_id` values, see [Regions](https://neon.tech/docs/introduction/regions/).\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Create a compute endpoint",
+        "description": "Creates a compute endpoint for the specified branch.\nAn endpoint is a Neon compute instance.\nThere is a maximum of one read-write compute endpoint per branch.\nIf the specified branch already has a read-write compute endpoint, the operation fails.\nA branch can have multiple read-only compute endpoints.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain `branch_id` by listing the project's branches.\nA `branch_id` has a `br-` prefix.\nFor supported regions and `region_id` values, see [Regions](https://neon.tech/docs/introduction/regions/).\nFor more information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
@@ -1951,7 +2501,7 @@
         },
         "responses": {
           "201": {
-            "description": "Created an endpoint",
+            "description": "Created a compute endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -1993,7 +2543,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:37:07Z",
-                      "updated_at": "2022-12-03T15:37:07Z"
+                      "updated_at": "2022-12-03T15:37:07Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -2006,8 +2557,8 @@
         }
       },
       "get": {
-        "summary": "Get a list of endpoints",
-        "description": "Retrieves a list of endpoints for the specified project.\nAn endpoint is a Neon compute instance.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Get a list of compute endpoints",
+        "description": "Retrieves a list of compute endpoints for the specified project.\nA compute endpoint is a Neon compute instance.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
@@ -2130,8 +2681,8 @@
         }
       ],
       "get": {
-        "summary": "Get an endpoint",
-        "description": "Retrieves information about the specified endpoint.\nAn endpoint is a Neon compute instance.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Get a compute endpoint",
+        "description": "Retrieves information about the specified compute endpoint.\nA compute endpoint is a Neon compute instance.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
@@ -2180,15 +2731,15 @@
         }
       },
       "delete": {
-        "summary": "Delete an endpoint",
-        "description": "Delete the specified endpoint.\nAn endpoint is a Neon compute instance.\nDeleting an endpoint drops existing network connections to the endpoint.\nThe deletion is completed when last operation in the chain finishes successfully.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Delete a compute endpoint",
+        "description": "Delete the specified compute endpoint.\nA compute endpoint is a Neon compute instance.\nDeleting a compute endpoint drops existing network connections to the compute endpoint.\nThe deletion is completed when last operation in the chain finishes successfully.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
         "operationId": "deleteProjectEndpoint",
         "responses": {
           "200": {
-            "description": "Deleted the specified endpoint",
+            "description": "Deleted the specified compute endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -2230,7 +2781,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:51:06Z",
-                      "updated_at": "2022-12-03T15:51:06Z"
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -2246,8 +2798,8 @@
         "tags": [
           "Endpoint"
         ],
-        "summary": "Update an endpoint",
-        "description": "Updates the specified endpoint. Currently, only changing the associated branch is supported.\nThe branch that you specify cannot have an existing endpoint.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` and `branch_id` by listing your project's endpoints.\nAn `endpoint_id` has an `ep-` prefix. A `branch_id` has a `br-` prefix.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n\nIf the returned list of operations is not empty, the endpoint is not ready to use.\nThe client must wait for the last operation to finish before using the endpoint.\nIf the endpoint was idle before the update, the endpoint becomes active for a short period of time,\nand the control plane suspends it again after the update.\n",
+        "summary": "Update a compute endpoint",
+        "description": "Updates the specified compute endpoint.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` and `branch_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix. A `branch_id` has a `br-` prefix.\n For more information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n\nIf the returned list of operations is not empty, the compute endpoint is not ready to use.\nThe client must wait for the last operation to finish before using the compute endpoint.\nIf the compute endpoint was idle before the update, it becomes active for a short period of time,\nand the control plane suspends it again after the update.\n",
         "operationId": "updateProjectEndpoint",
         "requestBody": {
           "required": true,
@@ -2266,7 +2818,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated the specified endpoint",
+            "description": "Updated the specified compute endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -2308,7 +2860,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:51:06Z",
-                      "updated_at": "2022-12-03T15:51:06Z"
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
                     },
                     {
                       "id": "9ffda74b-a582-4cff-b0f0-aaa8d14b8e6a",
@@ -2319,7 +2872,8 @@
                       "status": "scheduling",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:51:06Z",
-                      "updated_at": "2022-12-03T15:51:06Z"
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -2334,8 +2888,8 @@
     },
     "/projects/{project_id}/endpoints/{endpoint_id}/start": {
       "post": {
-        "summary": "Start an endpoint",
-        "description": "Starts an endpoint. The endpoint is ready to use\nafter the last operation in chain finishes successfully.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Start a compute endpoint",
+        "description": "Starts a compute endpoint. The compute endpoint is ready to use\nafter the last operation in chain finishes successfully.\n\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
@@ -2362,7 +2916,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Started the specified endpoint",
+            "description": "Started the specified compute endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -2404,7 +2958,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:51:06Z",
-                      "updated_at": "2022-12-03T15:51:06Z"
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -2439,8 +2994,8 @@
         }
       ],
       "post": {
-        "summary": "Suspend an endpoint",
-        "description": "Suspend the specified endpoint\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor more information about endpoints, see [Manage endpoints](https://neon.tech/docs/manage/endpoints/).\n",
+        "summary": "Suspend a compute endpoint",
+        "description": "Suspend the specified compute endpoint\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
           "Endpoint"
         ],
@@ -2489,7 +3044,8 @@
                       "status": "running",
                       "failures_count": 0,
                       "created_at": "2022-12-03T15:51:06Z",
-                      "updated_at": "2022-12-03T15:51:06Z"
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
                     }
                   ]
                 }
@@ -2502,11 +3058,12 @@
         }
       }
     },
-    "/projects/{project_id}/endpoints/{endpoint_id}/passwordless_auth": {
+    "/projects/{project_id}/endpoints/{endpoint_id}/restart": {
       "parameters": [
         {
           "name": "project_id",
           "in": "path",
+          "description": "The Neon project ID",
           "required": true,
           "schema": {
             "type": "string"
@@ -2515,21 +3072,210 @@
         {
           "name": "endpoint_id",
           "in": "path",
+          "description": "The endpoint ID",
           "required": true,
           "schema": {
             "type": "string"
           }
         }
-      ]
-    },
-    "/consumption/projects": {
-      "get": {
-        "summary": "Get a list of projects consumption",
-        "description": "Note, this is a preview API and could be subjected to significant changes in the future.\nRetrieves a list of per-project consumption for the current billing period.\n",
+      ],
+      "post": {
+        "summary": "Restart a compute endpoint",
+        "description": "Restart the specified compute endpoint: suspend immediately followed by start operations.\nYou can obtain a `project_id` by listing the projects for your Neon account.\nYou can obtain an `endpoint_id` by listing your project's compute endpoints.\nAn `endpoint_id` has an `ep-` prefix.\nFor information about compute endpoints, see [Manage computes](https://neon.tech/docs/manage/endpoints/).\n",
         "tags": [
-          "Preview"
+          "Endpoint"
         ],
-        "operationId": "listProjectsConsumption",
+        "operationId": "restartProjectEndpoint",
+        "responses": {
+          "200": {
+            "description": "Restarted endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndpointOperations"
+                },
+                "example": {
+                  "endpoint": {
+                    "host": "ep-steep-bush-777093.us-east-2.aws.neon.tech",
+                    "id": "ep-steep-bush-777093",
+                    "project_id": "shiny-wind-028834",
+                    "branch_id": "br-raspy-hill-832856",
+                    "autoscaling_limit_min_cu": 1,
+                    "autoscaling_limit_max_cu": 1,
+                    "region_id": "aws-us-east-2",
+                    "type": "read_write",
+                    "current_state": "idle",
+                    "settings": {
+                      "pg_settings": {}
+                    },
+                    "pooler_enabled": false,
+                    "pooler_mode": "transaction",
+                    "disabled": false,
+                    "passwordless_access": true,
+                    "last_active": "2022-12-03T15:00:00Z",
+                    "created_at": "2022-12-03T15:37:07Z",
+                    "updated_at": "2022-12-03T15:49:10Z",
+                    "proxy_host": "us-east-2.aws.neon.tech",
+                    "creation_source": "console",
+                    "provisioner": "k8s-pod",
+                    "suspend_timeout_seconds": 10800
+                  },
+                  "operations": [
+                    {
+                      "id": "e061087e-3c99-4856-b9c8-6b7751a253af",
+                      "project_id": "bitter-meadow-966132",
+                      "branch_id": "br-proud-paper-090813",
+                      "endpoint_id": "ep-shrill-thunder-454069",
+                      "action": "suspend_compute",
+                      "status": "running",
+                      "failures_count": 0,
+                      "created_at": "2022-12-03T15:51:06Z",
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
+                    },
+                    {
+                      "id": "e061087e-3c99-4856-b9c8-6b7751a253af",
+                      "project_id": "bitter-meadow-966132",
+                      "branch_id": "br-proud-paper-090813",
+                      "endpoint_id": "ep-shrill-thunder-454069",
+                      "action": "start_compute",
+                      "status": "running",
+                      "failures_count": 0,
+                      "created_at": "2022-12-03T15:51:06Z",
+                      "updated_at": "2022-12-03T15:51:06Z",
+                      "total_duration_ms": 100
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/consumption_history/account": {
+      "get": {
+        "summary": "Get account consumption metrics",
+        "description": "Retrieves consumption metrics for Scale plan accounts. History begins at the time of upgrade.\nAvailable for Scale plan users only.\n",
+        "tags": [
+          "Consumption"
+        ],
+        "operationId": "getConsumptionHistoryPerAccount",
+        "parameters": [
+          {
+            "name": "from",
+            "description": "Specify the start `date-time` for the consumption period.\nThe `date-time` value is rounded according to the specified `granularity`.\nFor example, `2024-03-15T15:30:00Z` for `daily` granularity will be rounded to `2024-03-15T00:00:00Z`.\nThe specified `date-time` value must respect the specified granularity:\n- For `hourly`, consumption metrics are limited to the last 168 hours.\n- For `daily`, consumption metrics are limited to the last 60 days.\n- For `monthly`, consumption metrics are limited to the past year.\n\nThe consumption history is available starting from `March 1, 2024, at 00:00:00 UTC`.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true
+          },
+          {
+            "name": "to",
+            "description": "Specify the end `date-time` for the consumption period.\nThe `date-time` value is rounded according to the specified granularity.\nFor example, `2024-03-15T15:30:00Z` for `daily` granularity will be rounded to `2024-03-15T00:00:00Z`.\nThe specified `date-time` value must respect the specified granularity:\n- For `hourly`, consumption metrics are limited to the last 168 hours.\n- For `daily`, consumption metrics are limited to the last 60 days.\n- For `monthly`, consumption metrics are limited to the past year.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true
+          },
+          {
+            "name": "granularity",
+            "description": "Specify the granularity of consumption metrics.\nHourly, daily, and monthly metrics are available for the last 168 hours, 60 days,\nand 1 year, respectively.\n",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ConsumptionHistoryGranularity"
+            },
+            "required": true
+          },
+          {
+            "name": "org_id",
+            "description": "Specify the organization for which the consumption metrics should be returned.\nIf this parameter is not provided, the endpoint will return the metrics for the\nauthenticated user's account.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_v1_metrics",
+            "description": "Include metrics utilized in previous pricing models.\n- **data_storage_bytes_hour**: The sum of the maximum observed storage values for each hour\n  for each project, which never decreases.\n",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returned consumption metrics for the Neon account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumptionHistoryPerAccountResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This endpoint is not available. It is only supported with Scale plan accounts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account is not a member of the organization specified by `org_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "The specified `date-time` range is outside the boundaries of the specified `granularity`.\nAdjust your `from` and `to` values or select a different `granularity`.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/consumption_history/projects": {
+      "get": {
+        "summary": "Get consumption metrics for each project",
+        "description": "Retrieves consumption metrics for Scale plan projects. History begins at the time of upgrade.\nAvailable for Scale plan users only.\n",
+        "tags": [
+          "Consumption"
+        ],
+        "operationId": "getConsumptionHistoryPerProject",
         "parameters": [
           {
             "name": "cursor",
@@ -2541,7 +3287,158 @@
           },
           {
             "name": "limit",
-            "description": "Specify a value from 1 to 1000 to limit number of projects in the response.",
+            "description": "Specify a value from 1 to 100 to limit number of projects in the response.",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "project_ids",
+            "description": "Specify a list of project IDs to filter the response.\nIf omitted, the response will contain all projects.\n",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 0,
+              "maxItems": 100
+            }
+          },
+          {
+            "name": "from",
+            "description": "Specify the start `date-time` for the consumption period.\nThe `date-time` value is rounded according to the specified `granularity`.\nFor example, `2024-03-15T15:30:00Z` for `daily` granularity will be rounded to `2024-03-15T00:00:00Z`.\nThe specified `date-time` value must respect the specified `granularity`:\n- For `hourly`, consumption metrics are limited to the last 168 hours.\n- For `daily`, consumption metrics are limited to the last 60 days.\n- For `monthly`, consumption metrics are limited to the last year.\n\nThe consumption history is available starting from `March 1, 2024, at 00:00:00 UTC`.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true
+          },
+          {
+            "name": "to",
+            "description": "Specify the end `date-time` for the consumption period.\nThe `date-time` value is rounded according to the specified granularity.\nFor example, `2024-03-15T15:30:00Z` for `daily` granularity will be rounded to `2024-03-15T00:00:00Z`.\nThe specified `date-time` value must respect the specified `granularity`:\n- For `hourly`, consumption metrics are limited to the last 168 hours.\n- For `daily`, consumption metrics are limited to the last 60 days.\n- For `monthly`, consumption metrics are limited to the last year.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true
+          },
+          {
+            "name": "granularity",
+            "description": "Specify the granularity of consumption metrics.\nHourly, daily, and monthly metrics are available for the last 168 hours, 60 days,\nand 1 year, respectively.\n",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ConsumptionHistoryGranularity"
+            },
+            "required": true
+          },
+          {
+            "name": "org_id",
+            "description": "Specify the organization for which the project consumption metrics should be returned.\nIf this parameter is not provided, the endpoint will return the metrics for the\nauthenticated user's projects.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_v1_metrics",
+            "description": "Include metrics utilized in previous pricing models.\n- **data_storage_bytes_hour**: The sum of the maximum observed storage values for each hour,\n  which never decreases.\n",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returned project consumption metrics for the Neon account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ConsumptionHistoryPerProjectResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This endpoint is not available. It is only supported with Scale plan accounts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account is not a member of the organization specified by `org_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "The specified `date-time` range is outside the boundaries of the specified `granularity`.\nAdjust your `from` and `to` values or select a different `granularity`.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/consumption/projects": {
+      "get": {
+        "summary": "Get project consumption metrics",
+        "description": "Retrieves consumption metrics for each project for the current billing period.\nFor usage information, see [Retrieving metrics for all projects](https://neon.tech/docs/guides/partner-billing#retrieving-metrics-for-all-projects).\n",
+        "tags": [
+          "Consumption"
+        ],
+        "operationId": "listProjectsConsumption",
+        "parameters": [
+          {
+            "name": "cursor",
+            "description": "Specify the cursor value from the previous response to get the next batch of projects",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Specify a value from 1 to 1000 to limit number of projects in the response",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -2549,11 +3446,37 @@
               "default": 10,
               "maximum": 1000
             }
+          },
+          {
+            "name": "from",
+            "description": "Specify the start date-time for the consumption period.\nThe time value must be provided in ISO 8601 format.\nIf `from` or `to` is not specified, we return only current consumption period.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "description": "Specify the end date-time period for the consumption period.\nThe time value must be provided in ISO 8601 format.\nIf `from` or `to` is not specified, only the current consumption period is returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "org_id",
+            "description": "Specify the organization for which the project consumption metrics should be returned.\nIf this parameter is not provided, the endpoint will return the metrics for the authenticated\nuser's projects.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Returned a list of per-project consumption for the Neon account",
+            "description": "Returned a list of project consumption metrics for the Neon account",
             "content": {
               "application/json": {
                 "schema": {
@@ -2565,6 +3488,106 @@
                       "$ref": "#/components/schemas/PaginationResponse"
                     }
                   ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account is not a member of the organization specified by `org_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "summary": "Get current user details",
+        "description": "Retrieves information about the current Neon user account.\n",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "getCurrentUserInfo",
+        "responses": {
+          "200": {
+            "description": "Returned information about the current user\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserInfoResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/users/me/organizations": {
+      "get": {
+        "summary": "Get current user organizations list",
+        "description": "Retrieves information about the current Neon user's organizations\n",
+        "operationId": "getCurrentUserOrganizations",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Returned information about the current user organizations\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        }
+      }
+    },
+    "/annotations": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "objects",
+            "description": "A list of annotation objects to query the annotations.",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationObjectsData"
+                }
+              }
+            }
+          }
+        ],
+        "summary": "List annotations",
+        "description": "List annotations\n",
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "listAnnotations",
+        "responses": {
+          "200": {
+            "description": "Annotations provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationsResponse"
                 }
               }
             }
@@ -2643,6 +3666,12 @@
                   "$ref": "#/components/schemas/OperationsResponse"
                 },
                 {
+                  "$ref": "#/components/schemas/RolesResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/DatabasesResponse"
+                },
+                {
                   "$ref": "#/components/schemas/ConnectionURIsOptionalResponse"
                 }
               ]
@@ -2675,20 +3704,31 @@
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "The Neon API requires an API key to authorize your requests, which you can enter below. Refer to our documentation to find out how to generate and use [API keys](https://neon.tech/docs/manage/api-keys)."
+        "description": "The Neon API requires an API key to authorize your requests, which you can enter below.\nRefer to our documentation to find out how to generate and use [API keys](https://neon.tech/docs/manage/api-keys).\n"
+      },
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "zenith"
       }
     },
     "schemas": {
+      "Features": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "boolean"
+        }
+      },
       "ComputeUnit": {
-        "type": "number"
+        "type": "number",
+        "minimum": 0.25
       },
       "Provisioner": {
         "type": "string",
-        "description": "The Neon compute provisioner.\n",
+        "description": "The Neon compute provisioner.\nSpecify the `k8s-neonvm` provisioner to create a compute endpoint that supports Autoscaling.\n",
         "enum": [
           "k8s-pod",
-          "k8s-neonvm",
-          "docker"
+          "k8s-neonvm"
         ]
       },
       "PaginationResponse": {
@@ -2737,7 +3777,9 @@
         "type": "object",
         "required": [
           "key",
-          "id"
+          "id",
+          "name",
+          "created_at"
         ],
         "properties": {
           "id": {
@@ -2748,6 +3790,15 @@
           "key": {
             "description": "The generated 64-bit token required to access the Neon API",
             "type": "string"
+          },
+          "name": {
+            "description": "The user-specified API key name",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "A timestamp indicating when the API key was created",
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2829,7 +3880,8 @@
           "status",
           "failures_count",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "total_duration_ms"
         ],
         "properties": {
           "id": {
@@ -2878,6 +3930,11 @@
             "description": "A timestamp indicating when the operation status was last updated",
             "type": "string",
             "format": "date-time"
+          },
+          "total_duration_ms": {
+            "description": "The total duration of the operation in milliseconds",
+            "type": "integer",
+            "format": "int32"
           }
         },
         "example": [
@@ -2890,7 +3947,8 @@
             "status": "running",
             "failures_count": 0,
             "created_at": "2022-11-08T23:33:16Z",
-            "updated_at": "2022-11-08T23:33:20Z"
+            "updated_at": "2022-11-08T23:33:20Z",
+            "total_duration_ms": 400
           },
           {
             "id": "d8ac46eb-a757-42b1-9907-f78322ee394e",
@@ -2901,7 +3959,8 @@
             "status": "finished",
             "failures_count": 0,
             "created_at": "2022-11-15T20:02:00Z",
-            "updated_at": "2022-11-15T20:02:02Z"
+            "updated_at": "2022-11-15T20:02:02Z",
+            "total_duration_ms": 200
           }
         ]
       },
@@ -2942,20 +4001,29 @@
           "check_availability",
           "delete_timeline",
           "create_branch",
-          "tenant_migrate",
+          "tenant_ignore",
+          "tenant_attach",
           "tenant_detach",
           "tenant_reattach",
-          "replace_safekeeper"
+          "replace_safekeeper",
+          "disable_maintenance",
+          "apply_storage_config",
+          "prepare_secondary_pageserver",
+          "switch_pageserver"
         ]
       },
       "OperationStatus": {
         "description": "The status of the operation",
         "type": "string",
         "enum": [
+          "scheduling",
           "running",
           "finished",
           "failed",
-          "scheduling"
+          "error",
+          "cancelling",
+          "cancelled",
+          "skipped"
         ]
       },
       "ProjectListItem": {
@@ -3034,7 +4102,7 @@
           },
           "cpu_used_sec": {
             "deprecated": true,
-            "description": "DEPRECATED, use data from the getProject endpoint instead.\n",
+            "description": "DEPRECATED. Use data from the getProject endpoint instead.\n",
             "type": "integer",
             "format": "int64"
           },
@@ -3058,7 +4126,7 @@
             "format": "date-time"
           },
           "synthetic_storage_size": {
-            "description": "Experimental. Do not use this field yet.\nThe data storage size in bytes.\n",
+            "description": "The current space occupied by the project in storage, in bytes. Synthetic storage size combines the logical data size and Write-Ahead Log (WAL) size for all branches in a project.\n",
             "type": "integer",
             "format": "int64"
           },
@@ -3071,8 +4139,14 @@
           "owner_id": {
             "type": "string"
           },
-          "owner": {
-            "$ref": "#/components/schemas/ProjectOwnerData"
+          "compute_last_active_at": {
+            "description": "The most recent time when any endpoint of this project was active.\n\nOmitted when observed no actitivy for endpoints of this project.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "org_id": {
+            "type": "string",
+            "description": "Organization id if a project belongs to organization.\nPermissions for the project will be given to organization members as defined by the organization admins.\nThe permissions of the project do not depend on the user that created the project if a project belongs to an organization.\n"
           }
         },
         "example": {
@@ -3209,9 +4283,9 @@
             "type": "string"
           },
           "history_retention_seconds": {
-            "description": "The number of seconds to retain PITR backup history for this project.\n",
+            "description": "The number of seconds to retain point-in-time restore (PITR) backup history for this project.\n",
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           },
           "created_at": {
             "description": "A timestamp indicating when the project was created\n",
@@ -3224,7 +4298,7 @@
             "format": "date-time"
           },
           "synthetic_storage_size": {
-            "description": "Experimental. Do not use this field yet.\nThe data storage size in bytes.\n",
+            "description": "The current space occupied by the project in storage, in bytes. Synthetic storage size combines the logical data size and Write-Ahead Log (WAL) size for all branches in a project.\n",
             "type": "integer",
             "format": "int64"
           },
@@ -3240,7 +4314,7 @@
           },
           "quota_reset_at": {
             "deprecated": true,
-            "description": "DEPRECATED. Use `consumption_period_end` from the getProject endpoint instead.\nA timestamp indicating when the project quota resets\n",
+            "description": "DEPRECATED. Use `consumption_period_end` from the getProject endpoint instead.\nA timestamp indicating when the project quota resets.\n",
             "type": "string",
             "format": "date-time"
           },
@@ -3249,6 +4323,14 @@
           },
           "owner": {
             "$ref": "#/components/schemas/ProjectOwnerData"
+          },
+          "compute_last_active_at": {
+            "description": "The most recent time when any endpoint of this project was active.\n\nOmitted when observed no actitivy for endpoints of this project.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "org_id": {
+            "type": "string"
           }
         },
         "example": {
@@ -3263,7 +4345,13 @@
           "creation_source": "console",
           "history_retention_seconds": 604800,
           "created_at": "2022-12-13T01:30:55Z",
-          "updated_at": "2022-12-13T01:30:55Z"
+          "updated_at": "2022-12-13T01:30:55Z",
+          "owner": {
+            "email": "some@email.com",
+            "branches_limit": 10,
+            "subscription_type": "scale"
+          },
+          "org_id": "org-morning-bread-81040908"
         }
       },
       "ProjectCreateRequest": {
@@ -3300,22 +4388,24 @@
                 }
               },
               "autoscaling_limit_min_cu": {
-                "description": "The minimum number of CPU units\n",
+                "deprecated": true,
+                "description": "DEPRECATED, use default_endpoint_settings.autoscaling_limit_min_cu instead.\n\nThe minimum number of Compute Units. The minimum value is `0.25`.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "autoscaling_limit_max_cu": {
-                "description": "The maximum number of CPU units\n",
+                "deprecated": true,
+                "description": "DEPRECATED, use default_endpoint_settings.autoscaling_limit_max_cu instead.\n\nThe maximum number of Compute Units. See [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "provisioner": {
                 "$ref": "#/components/schemas/Provisioner"
               },
               "region_id": {
-                "description": "The region identifier. See [the documentation](https://neon.tech/docs/introduction/regions) for the list of supported regions.\n",
+                "description": "The region identifier. Refer to our [Regions](https://neon.tech/docs/introduction/regions) documentation for supported regions. Values are specified in this format: `aws-us-east-1`\n",
                 "type": "string"
               },
               "default_endpoint_settings": {
-                "$ref": "#/components/schemas/PgSettingsData"
+                "$ref": "#/components/schemas/DefaultEndpointSettings"
               },
               "pg_version": {
                 "$ref": "#/components/schemas/PgVersion"
@@ -3323,6 +4413,17 @@
               "store_passwords": {
                 "description": "Whether or not passwords are stored for roles in the Neon project. Storing passwords facilitates access to Neon features that require authorization.\n",
                 "type": "boolean"
+              },
+              "history_retention_seconds": {
+                "description": "The number of seconds to retain the point-in-time restore (PITR) backup history for this project.\nThe default is 604800 seconds (7 days).\n",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "maximum": 2592000
+              },
+              "org_id": {
+                "type": "string",
+                "description": "Organization id in case the project created belongs to an organization.\nIf not present, project is owned by a user and not by org.\n"
               }
             }
           }
@@ -3341,10 +4442,18 @@
                 "$ref": "#/components/schemas/ProjectSettingsData"
               },
               "name": {
+                "description": "The project name",
                 "type": "string"
               },
               "default_endpoint_settings": {
-                "$ref": "#/components/schemas/PgSettingsData"
+                "$ref": "#/components/schemas/DefaultEndpointSettings"
+              },
+              "history_retention_seconds": {
+                "description": "The number of seconds to retain the point-in-time restore (PITR) backup history for this project.\nThe default is 604800 seconds (7 days).\n",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "maximum": 2592000
               }
             }
           }
@@ -3355,6 +4464,13 @@
         "properties": {
           "quota": {
             "$ref": "#/components/schemas/ProjectQuota"
+          },
+          "allowed_ips": {
+            "$ref": "#/components/schemas/AllowedIps"
+          },
+          "enable_logical_replication": {
+            "description": "Sets wal_level=logical for all compute endpoints in this project.\nAll active endpoints will be suspended.\nOnce enabled, logical replication cannot be disabled.\n",
+            "type": "boolean"
           }
         }
       },
@@ -3383,10 +4499,195 @@
           }
         }
       },
+      "ProjectPermission": {
+        "type": "object",
+        "required": [
+          "id",
+          "granted_to_email",
+          "granted_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "granted_to_email": {
+            "type": "string"
+          },
+          "granted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProjectPermissions": {
+        "type": "object",
+        "required": [
+          "project_permissions"
+        ],
+        "properties": {
+          "project_permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectPermission"
+            }
+          }
+        }
+      },
+      "GrantPermissionToProjectRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ConsumptionHistoryPerAccountResponse": {
+        "type": "object",
+        "properties": {
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionHistoryPerPeriod"
+            }
+          }
+        },
+        "required": [
+          "periods"
+        ]
+      },
+      "ConsumptionHistoryPerProjectResponse": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionHistoryPerProject"
+            }
+          }
+        },
+        "required": [
+          "projects"
+        ]
+      },
+      "ConsumptionHistoryPerProject": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionHistoryPerPeriod"
+            }
+          }
+        },
+        "required": [
+          "project_id",
+          "periods"
+        ]
+      },
+      "ConsumptionHistoryPerPeriod": {
+        "type": "object",
+        "properties": {
+          "period_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "consumption": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionHistoryPerTimeframe"
+            }
+          }
+        },
+        "required": [
+          "period_id",
+          "consumption"
+        ],
+        "example": {
+          "period_id": "79ec829f-1828-4006-ac82-9f1828a0067d",
+          "consumption": [
+            {
+              "timeframe_start": "2024-03-22T00:00:00Z",
+              "timeframe_end": "2024-03-23T00:00:00Z",
+              "active_time_seconds": 27853,
+              "compute_time_seconds": 18346,
+              "written_data_bytes": 1073741824,
+              "synthetic_storage_size_bytes": 5368709120
+            },
+            {
+              "timeframe_start": "2024-03-23T00:00:00Z",
+              "timeframe_end": "2024-03-24T00:00:00Z",
+              "active_time_seconds": 17498,
+              "compute_time_seconds": 3378,
+              "written_data_bytes": 5741824,
+              "synthetic_storage_size_bytes": 2370912
+            }
+          ]
+        }
+      },
+      "ConsumptionHistoryPerTimeframe": {
+        "type": "object",
+        "properties": {
+          "timeframe_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeframe_end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active_time_seconds": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "compute_time_seconds": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "written_data_bytes": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "synthetic_storage_size_bytes": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "data_storage_bytes_hour": {
+            "type": "integer",
+            "format": "uint64"
+          }
+        },
+        "required": [
+          "timeframe_start",
+          "timeframe_end",
+          "active_time_seconds",
+          "compute_time_seconds",
+          "written_data_bytes",
+          "synthetic_storage_size_bytes"
+        ]
+      },
+      "ConsumptionHistoryGranularity": {
+        "type": "string",
+        "enum": [
+          "hourly",
+          "daily",
+          "monthly"
+        ]
+      },
       "ProjectsConsumptionResponse": {
         "type": "object",
         "required": [
-          "projects"
+          "projects",
+          "periods_in_response"
         ],
         "properties": {
           "projects": {
@@ -3394,59 +4695,207 @@
             "items": {
               "$ref": "#/components/schemas/ProjectConsumption"
             }
+          },
+          "periods_in_response": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "ProjectConsumption": {
         "type": "object",
         "required": [
-          "id",
+          "period_id",
+          "previous_period_id",
+          "project_id",
           "active_time_seconds",
           "compute_time_seconds",
           "written_data_bytes",
           "data_transfer_bytes",
           "data_storage_bytes_hour",
-          "updated_at"
+          "synthetic_storage_size",
+          "updated_at",
+          "period_start",
+          "period_end"
         ],
         "properties": {
-          "id": {
-            "description": "The project ID\n",
+          "project_id": {
+            "description": "The project ID",
             "type": "string"
           },
+          "period_id": {
+            "description": "The Id of the consumption period, used to reference the `previous_period_id` field.\n",
+            "type": "string",
+            "format": "uuid"
+          },
           "data_storage_bytes_hour": {
-            "description": "Bytes-Hour. Project consumed that much storage hourly during the billing period. The value has some lag.\nThe value is reset at the beginning of each billing period.\n",
+            "description": "Bytes-Hour. The amount of storage the project consumed during the billing period. Expect some lag in the reported value.\nThe value is reset at the beginning of each billing period.\n",
             "type": "integer",
             "format": "int64",
             "minimum": 0
           },
-          "data_transfer_bytes": {
-            "description": "Bytes. Egress traffic from the Neon cloud to the client for given project over the billing period.\nIncludes deleted endpoints. The value has some lag. The value is reset at the beginning of each billing period.\n",
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "written_data_bytes": {
-            "description": "Bytes. Amount of WAL that travelled through storage for given project across all branches.\nThe value has some lag. The value is reset at the beginning of each billing period.\n",
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "compute_time_seconds": {
-            "description": "Seconds. The number of CPU seconds used by the project's compute endpoints, including compute endpoints that have been deleted.\nThe value has some lag. The value is reset at the beginning of each billing period.\nExamples:\n1. An endpoint that uses 1 CPU for 1 second is equal to `compute_time=1`.\n2. An endpoint that uses 2 CPUs simultaneously for 1 second is equal to `compute_time=2`.\n",
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "active_time_seconds": {
-            "description": "Seconds. Control plane observed endpoints of this project being active this amount of wall-clock time.\nThe value has some lag.\nThe value is reset at the beginning of each billing period.\n",
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "updated_at": {
-            "description": "A timestamp indicating when the project was last updated\n",
+          "data_storage_bytes_hour_updated_at": {
+            "description": "The timestamp of the last update of the `data_storage_bytes_hour` field.\n",
             "type": "string",
             "format": "date-time"
+          },
+          "synthetic_storage_size": {
+            "description": "Bytes. The current space occupied by project in storage. Expect some lag in the reported value.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "synthetic_storage_size_updated_at": {
+            "description": "The timestamp of the last update of the `synthetic_storage_size` field.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "data_transfer_bytes": {
+            "description": "Bytes. The egress traffic from the Neon cloud to the client for the project over the billing period.\nIncludes egress traffic for deleted endpoints. Expect some lag in the reported value. The value is reset at the beginning of each billing period.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "data_transfer_bytes_updated_at": {
+            "description": "Timestamp of the last update of `data_transfer_bytes` field\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "written_data_bytes": {
+            "description": "Bytes. The Amount of WAL that travelled through storage for given project for all branches.\nExpect some lag in the reported value. The value is reset at the beginning of each billing period.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "written_data_bytes_updated_at": {
+            "description": "The timestamp of the last update of `written_data_bytes` field.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "compute_time_seconds": {
+            "description": "Seconds. The number of CPU seconds used by the project's compute endpoints, including compute endpoints that have been deleted.\nExpect some lag in the reported value. The value is reset at the beginning of each billing period.\nExamples:\n1. An endpoint that uses 1 CPU for 1 second is equal to `compute_time=1`.\n2. An endpoint that uses 2 CPUs simultaneously for 1 second is equal to `compute_time=2`.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "compute_time_seconds_updated_at": {
+            "description": "The timestamp of the last update of `compute_time_seconds` field.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "active_time_seconds": {
+            "description": "Seconds. The amount of time that compute endpoints in this project have been active.\nExpect some lag in the reported value.\n\nThe value is reset at the beginning of each billing period.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "active_time_seconds_updated_at": {
+            "description": "The timestamp of the last update of the `active_time_seconds` field.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "description": "A timestamp indicating when the period was last updated.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "period_start": {
+            "description": "The start of the consumption period.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "period_end": {
+            "description": "The end of the consumption period.\n",
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "previous_period_id": {
+            "description": "The `period_id` of the previous consumption period.\n",
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectLimits": {
+        "type": "object",
+        "required": [
+          "limits",
+          "features"
+        ],
+        "properties": {
+          "limits": {
+            "type": "object",
+            "required": [
+              "active_time",
+              "max_projects",
+              "max_branches",
+              "max_protected_branches",
+              "max_autoscaling_cu",
+              "cpu_seconds",
+              "max_compute_time_non_primary",
+              "max_active_endpoints",
+              "max_read_only_endpoints",
+              "max_allowed_ips",
+              "max_monitoring_retention_hours",
+              "max_history_retention_seconds",
+              "min_autosuspend_seconds",
+              "max_data_transfer"
+            ],
+            "properties": {
+              "active_time": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "max_projects": {
+                "type": "integer"
+              },
+              "max_branches": {
+                "type": "integer"
+              },
+              "max_protected_branches": {
+                "type": "integer"
+              },
+              "max_autoscaling_cu": {
+                "type": "number",
+                "format": "float64"
+              },
+              "cpu_seconds": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "max_compute_time_non_primary": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "max_active_endpoints": {
+                "type": "integer"
+              },
+              "max_read_only_endpoints": {
+                "type": "integer"
+              },
+              "max_allowed_ips": {
+                "type": "integer"
+              },
+              "max_monitoring_retention_hours": {
+                "type": "integer"
+              },
+              "max_history_retention_seconds": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "min_autosuspend_seconds": {
+                "type": "integer"
+              },
+              "max_data_transfer": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
           }
         }
       },
@@ -3461,6 +4910,8 @@
           "created_at",
           "updated_at",
           "primary",
+          "default",
+          "protected",
           "cpu_used_sec",
           "active_time_seconds",
           "compute_time_seconds",
@@ -3509,12 +4960,21 @@
             "type": "string"
           },
           "primary": {
-            "description": "Whether the branch is the project's primary branch\n",
+            "deprecated": true,
+            "description": "DEPRECATED. Use `default` field.\nWhether the branch is the project's primary branch\n",
+            "type": "boolean"
+          },
+          "default": {
+            "description": "Whether the branch is the project's default branch\n",
+            "type": "boolean"
+          },
+          "protected": {
+            "description": "Whether the branch is protected\n",
             "type": "boolean"
           },
           "cpu_used_sec": {
             "deprecated": true,
-            "description": "CPU seconds used by all the endpoints of the branch, including deleted ones.\nThis value is reset at the beginning of each billing period.\nExamples:\n1. A branch that uses 1 CPU for 1 second is equal to `cpu_used_sec=1`.\n2. A branch that uses 2 CPUs simultaneously for 1 second is equal to `cpu_used_sec=2`.\n",
+            "description": "CPU seconds used by all of the branch's compute endpoints, including deleted ones.\nThis value is reset at the beginning of each billing period.\nExamples:\n1. A branch that uses 1 CPU for 1 second is equal to `cpu_used_sec=1`.\n2. A branch that uses 2 CPUs simultaneously for 1 second is equal to `cpu_used_sec=2`.\n",
             "type": "integer",
             "format": "int64"
           },
@@ -3543,6 +5003,11 @@
             "description": "A timestamp indicating when the branch was last updated\n",
             "type": "string",
             "format": "date-time"
+          },
+          "last_reset_at": {
+            "description": "A timestamp indicating when the branch was last reset\n",
+            "type": "string",
+            "format": "date-time"
           }
         },
         "example": {
@@ -3551,11 +5016,13 @@
           "parent_id": "br-aged-salad-637688",
           "parent_lsn": "0/1DE2850",
           "name": "dev2",
+          "protected": false,
           "current_state": "ready",
           "creation_source": "console",
           "created_at": "2022-11-30T19:09:48Z",
           "updated_at": "2022-12-01T19:53:05Z",
-          "primary": true
+          "primary": true,
+          "default": true
         }
       },
       "BranchState": {
@@ -3576,11 +5043,11 @@
             "$ref": "#/components/schemas/EndpointType"
           },
           "autoscaling_limit_min_cu": {
-            "description": "The minimum number of CPU units\n",
+            "description": "The minimum number of Compute Units. The minimum value is `0.25`.\n    See [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\n    for more information.\n",
             "$ref": "#/components/schemas/ComputeUnit"
           },
           "autoscaling_limit_max_cu": {
-            "description": "The maximum number of CPU units\n",
+            "description": "The maximum number of Compute Units.\n    See [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\n    for more information.\n",
             "$ref": "#/components/schemas/ComputeUnit"
           },
           "provisioner": {
@@ -3604,7 +5071,7 @@
             "type": "object",
             "properties": {
               "parent_id": {
-                "description": "The `branch_id` of the parent branch\n",
+                "description": "The `branch_id` of the parent branch. If omitted or empty, the branch will be created from the project's default branch.\n",
                 "type": "string"
               },
               "name": {
@@ -3616,9 +5083,13 @@
                 "type": "string"
               },
               "parent_timestamp": {
-                "description": "A timestamp identifying a point in time on the parent branch. The branch will be created with data starting from this point in time.\n",
+                "description": "A timestamp identifying a point in time on the parent branch. The branch will be created with data starting from this point in time.\nThe timestamp must be provided in ISO 8601 format; for example: `2024-02-26T12:00:00Z`.\n",
                 "type": "string",
                 "format": "date-time"
+              },
+              "protected": {
+                "description": "Whether the branch is protected\n",
+                "type": "boolean"
               }
             }
           }
@@ -3635,8 +5106,36 @@
             "properties": {
               "name": {
                 "type": "string"
+              },
+              "protected": {
+                "type": "boolean"
               }
             }
+          }
+        }
+      },
+      "BranchRestoreRequest": {
+        "type": "object",
+        "required": [
+          "source_branch_id"
+        ],
+        "properties": {
+          "source_branch_id": {
+            "type": "string",
+            "description": "The `branch_id` of the restore source branch.\nIf `source_timestamp` and `source_lsn` are omitted, the branch will be restored to head.\nIf `source_branch_id` is equal to the branch's id, `source_timestamp` or `source_lsn` is required.\n"
+          },
+          "source_lsn": {
+            "description": "A Log Sequence Number (LSN) on the source branch. The branch will be restored with data from this LSN.\n",
+            "type": "string"
+          },
+          "source_timestamp": {
+            "description": "A timestamp identifying a point in time on the source branch. The branch will be restored with data starting from this point in time.\nThe timestamp must be provided in ISO 8601 format; for example: `2024-02-26T12:00:00Z`.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "preserve_under_name": {
+            "description": "If not empty, the previous state of the branch will be saved to a branch with this name.\nIf the branch has children or the `source_branch_id` is equal to the branch id, this field is required. All existing child branches will be moved to the newly created branch under the name `preserve_under_name`.\n",
+            "type": "string"
           }
         }
       },
@@ -3648,6 +5147,14 @@
         "properties": {
           "branch": {
             "$ref": "#/components/schemas/Branch"
+          }
+        }
+      },
+      "BranchSchemaResponse": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
           }
         }
       },
@@ -3676,23 +5183,23 @@
         ],
         "properties": {
           "database": {
-            "description": "Database name.\n",
+            "description": "Database name\n",
             "type": "string"
           },
           "password": {
-            "description": "Password for the role.\n",
+            "description": "Password for the role\n",
             "type": "string"
           },
           "role": {
-            "description": "Role name.\n",
+            "description": "Role name\n",
             "type": "string"
           },
           "host": {
-            "description": "Host name.\n",
+            "description": "Hostname\n",
             "type": "string"
           },
           "pooler_host": {
-            "description": "Pooler host name.\n",
+            "description": "Pooler hostname\n",
             "type": "string"
           }
         }
@@ -3705,11 +5212,23 @@
         ],
         "properties": {
           "connection_uri": {
-            "description": "Connection URI is same as specified in https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6\nIt is a ready to use string for psql or for DATABASE_URL environment variable.\n",
+            "description": "The connection URI is defined as specified here: [Connection URIs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING-URIS)\nThe connection URI can be used to connect to a Postgres database with psql or defined in a DATABASE_URL environment variable.\n",
             "type": "string"
           },
           "connection_parameters": {
             "$ref": "#/components/schemas/ConnectionParameters"
+          }
+        }
+      },
+      "ConnectionURIResponse": {
+        "type": "object",
+        "required": [
+          "uri"
+        ],
+        "properties": {
+          "uri": {
+            "description": "The connection URI.\n",
+            "type": "string"
           }
         }
       },
@@ -3755,11 +5274,11 @@
             "type": "string"
           },
           "autoscaling_limit_min_cu": {
-            "description": "The minimum number of CPU units\n",
+            "description": "The minimum number of Compute Units\n",
             "$ref": "#/components/schemas/ComputeUnit"
           },
           "autoscaling_limit_max_cu": {
-            "description": "The maximum number of CPU units\n",
+            "description": "The maximum number of Compute Units\n",
             "$ref": "#/components/schemas/ComputeUnit"
           },
           "region_id": {
@@ -3786,7 +5305,7 @@
             "$ref": "#/components/schemas/EndpointPoolerMode"
           },
           "disabled": {
-            "description": "Whether to restrict connections to the compute endpoint\n",
+            "description": "Whether to restrict connections to the compute endpoint.\nEnabling this option schedules a suspend compute operation.\nA disabled compute endpoint cannot be enabled by a connection or\nconsole action. However, the compute endpoint is periodically\nenabled by check_availability operations.\n",
             "type": "boolean"
           },
           "passwordless_access": {
@@ -3821,6 +5340,10 @@
           },
           "provisioner": {
             "$ref": "#/components/schemas/Provisioner"
+          },
+          "compute_release_version": {
+            "description": "Attached compute's release version number.\n",
+            "type": "string"
           }
         },
         "example": {
@@ -3873,11 +5396,33 @@
         ]
       },
       "SuspendTimeoutSeconds": {
-        "description": "Duration of inactivity in seconds after which endpoint will be\nautomatically suspended. Value `0` means use global default,\n`-1` means never suspend. Maximum value is 1 week in seconds.\n",
+        "description": "Duration of inactivity in seconds after which the compute endpoint is\nautomatically suspended. The value `0` means use the global default.\nThe value `-1` means never suspend. The default value is `300` seconds (5 minutes).\nThe minimum value is `60` seconds (1 minute).\nThe maximum value is `604800` seconds (1 week). For more information, see\n[Auto-suspend configuration](https://neon.tech/docs/manage/endpoints#auto-suspend-configuration).\n",
         "type": "integer",
         "format": "int64",
         "minimum": -1,
         "maximum": 604800
+      },
+      "AllowedIps": {
+        "description": "A list of IP addresses that are allowed to connect to the compute endpoint.\nIf the list is empty or not set, all IP addresses are allowed.\nIf protected_branches_only is true, the list will be applied only to protected branches.\n",
+        "type": "object",
+        "properties": {
+          "ips": {
+            "description": "A list of IP addresses that are allowed to connect to the endpoint.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "protected_branches_only": {
+            "description": "If true, the list will be applied only to protected branches.",
+            "type": "boolean"
+          },
+          "primary_branch_only": {
+            "deprecated": true,
+            "description": "DEPRECATED: Use `protected_branches_only`.\nIf true, the list will be applied only to the default branch.\n",
+            "type": "boolean"
+          }
+        }
       },
       "EndpointCreateRequest": {
         "type": "object",
@@ -3907,17 +5452,18 @@
                 "$ref": "#/components/schemas/EndpointSettingsData"
               },
               "autoscaling_limit_min_cu": {
-                "description": "The minimum number of CPU units\n",
+                "description": "The minimum number of Compute Units. The minimum value is `0.25`.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "autoscaling_limit_max_cu": {
-                "description": "The maximum number of CPU units\n",
+                "description": "The maximum number of Compute Units.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "provisioner": {
                 "$ref": "#/components/schemas/Provisioner"
               },
               "pooler_enabled": {
+                "deprecated": true,
                 "description": "Whether to enable connection pooling for the compute endpoint\n",
                 "type": "boolean"
               },
@@ -3926,7 +5472,7 @@
               },
               "disabled": {
                 "type": "boolean",
-                "description": "Whether to restrict connections to the compute endpoint\n"
+                "description": "Whether to restrict connections to the compute endpoint.\nEnabling this option schedules a suspend compute operation.\nA disabled compute endpoint cannot be enabled by a connection or\nconsole action. However, the compute endpoint is periodically\nenabled by check_availability operations.\n"
               },
               "passwordless_access": {
                 "type": "boolean",
@@ -3953,11 +5499,11 @@
                 "type": "string"
               },
               "autoscaling_limit_min_cu": {
-                "description": "The minimum number of CPU units\n",
+                "description": "The minimum number of Compute Units. The minimum value is `0.25`.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "autoscaling_limit_max_cu": {
-                "description": "The maximum number of CPU units\n",
+                "description": "The maximum number of Compute Units.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
                 "$ref": "#/components/schemas/ComputeUnit"
               },
               "provisioner": {
@@ -3967,6 +5513,7 @@
                 "$ref": "#/components/schemas/EndpointSettingsData"
               },
               "pooler_enabled": {
+                "deprecated": true,
                 "description": "Whether to enable connection pooling for the compute endpoint\n",
                 "type": "boolean"
               },
@@ -3974,7 +5521,7 @@
                 "$ref": "#/components/schemas/EndpointPoolerMode"
               },
               "disabled": {
-                "description": "Whether to restrict connections to the compute endpoint\n",
+                "description": "Whether to restrict connections to the compute endpoint.\nEnabling this option schedules a suspend compute operation.\nA disabled compute endpoint cannot be enabled by a connection or\nconsole action. However, the compute endpoint is periodically\nenabled by check_availability operations.\n",
                 "type": "boolean"
               },
               "passwordless_access": {
@@ -4021,17 +5568,6 @@
             "items": {
               "$ref": "#/components/schemas/ConnectionDetails"
             }
-          }
-        }
-      },
-      "ConnectionURIResponse": {
-        "type": "object",
-        "required": [
-          "connection_uri"
-        ],
-        "properties": {
-          "connection_uri": {
-            "$ref": "#/components/schemas/ConnectionDetails"
           }
         }
       },
@@ -4235,6 +5771,30 @@
           "last4": {
             "type": "string",
             "description": "Last 4 digits of the card.\n"
+          },
+          "brand": {
+            "type": "string",
+            "description": "Brand of credit card.\n",
+            "enum": [
+              "amex",
+              "diners",
+              "discover",
+              "jcb",
+              "mastercard",
+              "unionpay",
+              "unknown",
+              "visa"
+            ]
+          },
+          "exp_month": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Credit card expiration month\n"
+          },
+          "exp_year": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Credit card expiration year\n"
           }
         }
       },
@@ -4259,6 +5819,7 @@
           "payment_source",
           "subscription_type",
           "quota_reset_at_last",
+          "name",
           "email",
           "address_city",
           "address_country",
@@ -4275,9 +5836,13 @@
             "$ref": "#/components/schemas/BillingSubscriptionType"
           },
           "quota_reset_at_last": {
-            "description": "Last time when quota was reset. Defaults to current datetime when account is created.\n",
+            "description": "The last time the quota was reset. Defaults to the date-time the account is created.\n",
             "type": "string",
             "format": "date-time"
+          },
+          "name": {
+            "description": "The full name of the individual or entity that owns the billing account. This name appears on invoices.",
+            "type": "string"
           },
           "email": {
             "description": "Billing email, to receive emails related to invoices and subscriptions.\n",
@@ -4288,7 +5853,11 @@
             "type": "string"
           },
           "address_country": {
-            "description": "Billing address country.\n",
+            "description": "Billing address country code defined by ISO 3166-1 alpha-2.\n",
+            "type": "string"
+          },
+          "address_country_name": {
+            "description": "Billing address country name.\n",
             "type": "string"
           },
           "address_line1": {
@@ -4306,6 +5875,18 @@
           "address_state": {
             "description": "Billing address state or region.\n",
             "type": "string"
+          },
+          "orb_portal_url": {
+            "description": "Orb user portal url\n",
+            "type": "string"
+          },
+          "tax_id": {
+            "description": "The tax identification number for the billing account, displayed on invoices.\n",
+            "type": "string"
+          },
+          "tax_id_type": {
+            "description": "The type of the tax identification number based on the country.\n",
+            "type": "string"
           }
         }
       },
@@ -4314,10 +5895,11 @@
         "description": "Type of subscription to Neon Cloud.\nNotice that for users without billing account this will be \"UNKNOWN\"\n",
         "enum": [
           "UNKNOWN",
-          "free",
-          "pro",
-          "platform_partnership",
-          "enterprise"
+          "direct_sales",
+          "aws_marketplace",
+          "free_v2",
+          "launch",
+          "scale"
         ]
       },
       "Database": {
@@ -4439,15 +6021,400 @@
           }
         }
       },
-      "ConsoleSettingsRaw": {
+      "Invitation": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "org_id",
+          "invited_by",
+          "invited_at",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "description": "Email of the invited user",
+            "type": "string",
+            "format": "email"
+          },
+          "org_id": {
+            "description": "Organization id as it is stored in Neon",
+            "type": "string"
+          },
+          "invited_by": {
+            "description": "UUID for the user_id who extended the invitation",
+            "type": "string",
+            "format": "uuid"
+          },
+          "invited_at": {
+            "description": "Timestamp when the invitation was created",
+            "type": "string",
+            "format": "date-time"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          }
+        }
+      },
+      "MemberRole": {
+        "description": "The role of the organization member",
+        "type": "string",
+        "enum": [
+          "admin",
+          "member"
+        ]
+      },
+      "Member": {
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "org_id",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberUserInfo": {
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "last_name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberWithUser": {
+        "type": "object",
+        "required": [
+          "member",
+          "user"
+        ],
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/Member"
+          },
+          "user": {
+            "$ref": "#/components/schemas/MemberUserInfo"
+          }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "handle",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "created_at": {
+            "description": "A timestamp indicting when the organization was created\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "description": "A timestamp indicating when the organization was updated\n",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrganizationsResponse": {
+        "type": "object",
+        "required": [
+          "organizations"
+        ],
+        "properties": {
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Organization"
+            }
+          }
+        }
+      },
+      "OrganizationsUpdateRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "OrganizationInvitationsResponse": {
+        "type": "object",
+        "required": [
+          "invitations"
+        ],
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Invitation"
+            }
+          }
+        }
+      },
+      "OrganizationInviteCreateRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          }
+        }
+      },
+      "OrganizationInvitesCreateRequest": {
+        "type": "object",
+        "required": [
+          "invitations"
+        ],
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationInviteCreateRequest"
+            }
+          }
+        }
+      },
+      "OrganizationInviteUpdateRequest": {
         "type": "object",
         "properties": {
-          "project_creation_forbidden": {
-            "description": "management",
-            "type": "boolean"
+          "email": {
+            "type": "string",
+            "format": "email"
           },
-          "proxy_host": {
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          },
+          "resend": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OrganizationGuestsResponse": {
+        "description": "A list of details for guests of an organisation\n",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OrganizationGuest"
+        }
+      },
+      "OrganizationGuest": {
+        "description": "Details of an organisation guest, who is not directly a member of\nan organisation but has been shared one of the projects it owns\n",
+        "type": "object",
+        "required": [
+          "permission_id",
+          "user_email",
+          "project_id",
+          "project_name"
+        ],
+        "properties": {
+          "permission_id": {
             "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "project_name": {
+            "type": "string"
+          }
+        }
+      },
+      "OrganizationMemberUpdateRequest": {
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          }
+        }
+      },
+      "OrganizationMembersResponse": {
+        "type": "object",
+        "required": [
+          "members"
+        ],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberWithUser"
+            }
+          }
+        }
+      },
+      "InvitationCreateRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "description": "Email to invite",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MemberRole"
+          }
+        }
+      },
+      "OrganizationCreateRequest": {
+        "type": "object",
+        "required": [
+          "organization",
+          "subscription_type"
+        ],
+        "properties": {
+          "organization": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "The organization name",
+                "type": "string"
+              },
+              "invitations": {
+                "description": "Emails with roles to invite to the organization",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InvitationCreateRequest"
+                }
+              }
+            }
+          },
+          "subscription_type": {
+            "$ref": "#/components/schemas/BillingSubscriptionType"
+          }
+        }
+      },
+      "OrganizationLimits": {
+        "type": "object",
+        "required": [
+          "limits",
+          "features"
+        ],
+        "properties": {
+          "limits": {
+            "type": "object",
+            "required": [
+              "active_time",
+              "max_projects",
+              "max_branches",
+              "max_autoscaling_cu",
+              "cpu_seconds",
+              "max_active_endpoints",
+              "max_read_only_endpoints",
+              "max_allowed_ips",
+              "max_monitoring_retention_hours",
+              "max_history_retention_seconds",
+              "max_compute_time_non_primary",
+              "min_autosuspend_seconds"
+            ],
+            "properties": {
+              "active_time": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "max_projects": {
+                "type": "integer"
+              },
+              "max_branches": {
+                "type": "integer"
+              },
+              "max_autoscaling_cu": {
+                "type": "number",
+                "format": "float64"
+              },
+              "cpu_seconds": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "max_active_endpoints": {
+                "type": "integer"
+              },
+              "max_read_only_endpoints": {
+                "type": "integer"
+              },
+              "max_allowed_ips": {
+                "type": "integer"
+              },
+              "max_monitoring_retention_hours": {
+                "type": "integer"
+              },
+              "max_history_retention_seconds": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "max_compute_time_non_primary": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "min_autosuspend_seconds": {
+                "type": "integer"
+              }
+            }
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
           }
         }
       },
@@ -4474,6 +6441,55 @@
             "type": "string"
           },
           "provider": {
+            "$ref": "#/components/schemas/IdentityProviderId"
+          }
+        }
+      },
+      "LinkedAuthAccount": {
+        "type": "object",
+        "required": [
+          "provider",
+          "provider_display_name",
+          "username"
+        ],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/IdentityProviderId"
+          },
+          "provider_display_name": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateUserInfoRequest": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "image": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "new_password": {
             "type": "string"
           }
         }
@@ -4487,6 +6503,7 @@
           "email",
           "login",
           "name",
+          "last_name",
           "image",
           "projects_limit",
           "branches_limit",
@@ -4524,6 +6541,9 @@
           "name": {
             "type": "string"
           },
+          "last_name": {
+            "type": "string"
+          },
           "projects_limit": {
             "type": "integer",
             "format": "int64"
@@ -4544,39 +6564,88 @@
           }
         }
       },
+      "CurrentUserInfoAuthResponse": {
+        "type": "object",
+        "required": [
+          "password_stored",
+          "auth_accounts",
+          "linked_accounts"
+        ],
+        "properties": {
+          "password_stored": {
+            "type": "boolean"
+          },
+          "auth_accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrentUserAuthAccount"
+            }
+          },
+          "linked_accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedAuthAccount"
+            }
+          }
+        }
+      },
+      "VerifyUserPasswordRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "IdentityProviderId": {
+        "description": "Identity provider id from keycloak",
+        "type": "string",
+        "enum": [
+          "github",
+          "google",
+          "hasura",
+          "keycloak"
+        ]
+      },
       "EndpointSettingsData": {
         "type": "object",
         "description": "A collection of settings for a compute endpoint",
         "properties": {
           "pg_settings": {
             "$ref": "#/components/schemas/PgSettingsData"
+          },
+          "pgbouncer_settings": {
+            "$ref": "#/components/schemas/PgbouncerSettingsData"
           }
         }
       },
       "ProjectQuota": {
         "type": "object",
-        "description": "Per-project consumption quota. If quota is exceeded, then all active computes\nwill be automatically suspended and it won't be possible to start them neither\nwith API method call or with incoming proxy connections. The only exception is\n`logical_size_bytes`, which is applied on per-branch basis, i.e. only compute\non the branch with `logical_size` exceeding quota will be suspended.\n\nQuotas are enforced based on per-project consumption metrics with the same names,\nwhich are reset at the end of each billing period (first day of the month).\nLogical size is also an exception here, as it represents the total size of data\nstored in some branch, so it's not reset.\n\nZero quota value or empty mean 'unlimited'.\n",
+        "description": "Per-project consumption quota. If the quota is exceeded, all active computes\nare automatically suspended and it will not be possible to start them with\nan API method call or incoming proxy connections. The only exception is\n`logical_size_bytes`, which is applied on per-branch basis, i.e., only the\ncompute on the branch that exceeds the `logical_size` quota will be suspended.\n\nQuotas are enforced based on per-project consumption metrics with the same names,\nwhich are reset at the end of each billing period (the first day of the month).\nLogical size is also an exception in this case, as it represents the total size\nof data stored in a branch, so it is not reset.\n\nA zero or empty quota value means 'unlimited'.\n",
         "properties": {
           "active_time_seconds": {
-            "description": "The total amount of wall-clock time allowed to be spent by project's compute endpoints.\n",
+            "description": "The total amount of wall-clock time allowed to be spent by the project's compute endpoints.\n",
             "type": "integer",
             "format": "int64",
             "minimum": 0
           },
           "compute_time_seconds": {
-            "description": "The total amount of CPU seconds allowed to be spent by project's compute endpoints.\n",
+            "description": "The total amount of CPU seconds allowed to be spent by the project's compute endpoints.\n",
             "type": "integer",
             "format": "int64",
             "minimum": 0
           },
           "written_data_bytes": {
-            "description": "Total amount of data written to all project's branches.\n",
+            "description": "Total amount of data written to all of a project's branches.\n",
             "type": "integer",
             "format": "int64",
             "minimum": 0
           },
           "data_transfer_bytes": {
-            "description": "Total amount of data transferred from all project's branches using proxy.\n",
+            "description": "Total amount of data transferred from all of a project's branches using the proxy.\n",
             "type": "integer",
             "format": "int64",
             "minimum": 0
@@ -4595,19 +6664,46 @@
         "properties": {
           "pg_settings": {
             "$ref": "#/components/schemas/PgSettingsData"
+          },
+          "pgbouncer_settings": {
+            "$ref": "#/components/schemas/PgbouncerSettingsData"
+          },
+          "autoscaling_limit_min_cu": {
+            "description": "The minimum number of Compute Units. The minimum value is `0.25`.\nSee [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
+            "$ref": "#/components/schemas/ComputeUnit"
+          },
+          "autoscaling_limit_max_cu": {
+            "description": "The maximum number of Compute Units. See [Compute size and Autoscaling configuration](https://neon.tech/docs/manage/endpoints#compute-size-and-autoscaling-configuration)\nfor more information.\n",
+            "$ref": "#/components/schemas/ComputeUnit"
+          },
+          "suspend_timeout_seconds": {
+            "$ref": "#/components/schemas/SuspendTimeoutSeconds"
           }
+        },
+        "additionalProperties": {
+          "type": "string"
         }
       },
       "PgSettingsData": {
-        "description": "A raw representation of PostgreSQL settings",
+        "description": "A raw representation of Postgres settings",
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "PgbouncerSettingsData": {
+        "description": "A raw representation of PgBouncer settings",
         "type": "object",
         "additionalProperties": {
           "type": "string"
         }
       },
       "PgVersion": {
-        "description": "The major PostgreSQL version number. Currently supported version are `14` and `15`.",
-        "type": "integer"
+        "description": "The major Postgres version number. Currently supported versions are `14`, `15`, and `16`.",
+        "type": "integer",
+        "minimum": 14,
+        "maximum": 16,
+        "default": 16
       },
       "HealthCheck": {
         "type": "object",
@@ -4643,6 +6739,14 @@
           }
         }
       },
+      "UserDeletionConditionName": {
+        "type": "string",
+        "enum": [
+          "project_count",
+          "org_admin_membership_count",
+          "subscription_type"
+        ]
+      },
       "GeneralError": {
         "type": "object",
         "description": "General Error",
@@ -4662,16 +6766,6 @@
       },
       "ErrorCode": {
         "type": "string"
-      },
-      "ProjectOperations": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ProjectResponse"
-          },
-          {
-            "$ref": "#/components/schemas/OperationsResponse"
-          }
-        ]
       },
       "BranchOperations": {
         "allOf": [
@@ -4712,6 +6806,116 @@
             "$ref": "#/components/schemas/OperationsResponse"
           }
         ]
+      },
+      "SupportTicketSeverity": {
+        "type": "string",
+        "enum": [
+          "low",
+          "normal",
+          "high",
+          "critical"
+        ]
+      },
+      "AnnotationData": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "required": [
+          "object",
+          "value"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/AnnotationObjectData"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AnnotationValueData"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AnnotationValueData": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "AnnotationObjectData": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "required": [
+          "type",
+          "id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "AnnotationObjectsData": {
+        "type": "array",
+        "x-tags": [
+          "Branch"
+        ],
+        "items": {
+          "$ref": "#/components/schemas/AnnotationObjectData"
+        }
+      },
+      "AnnotationResponse": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "properties": {
+          "annotation": {
+            "$ref": "#/components/schemas/AnnotationData"
+          }
+        }
+      },
+      "AnnotationsResponse": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotationData"
+            }
+          }
+        }
+      },
+      "AnnotationsMapResponse": {
+        "type": "object",
+        "x-tags": [
+          "Branch"
+        ],
+        "properties": {
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AnnotationData"
+            }
+          }
+        }
       }
     }
   }

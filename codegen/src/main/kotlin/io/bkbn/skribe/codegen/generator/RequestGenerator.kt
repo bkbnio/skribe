@@ -70,7 +70,9 @@ class RequestGenerator(
     val inlineResponseTypes = collectInlineResponseTypes()
     if (inlineResponseTypes.isEmpty()) return null
     return FileSpec.builder(modelPackage, operationId.capitalized().plus("Response")).apply {
-      inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
+      // TODO: Fix
+      addSchemaType(operationId.capitalized(), inlineResponseTypes.first())
+//      inlineResponseTypes.forEach { addSchemaType(operationId.capitalized(), it) }
     }.build()
   }
 
@@ -115,9 +117,10 @@ class RequestGenerator(
     }
 
   private fun Operation.collectInlineParameterTypes(): Map<String, Schema<*>> =
-    (parameters ?: emptyList()).associate { parameter ->
-      operationId.capitalized().plus(parameter.name.capitalized()) to parameter.schema
-    }.filterValues { it is StringSchema && it.enumConstants.isNotEmpty() }
+    (parameters ?: emptyList())
+      .filter { it.`$ref` == null }.associate { parameter ->
+        operationId.capitalized().plus(parameter.name.convertToCamelCase().capitalized()) to parameter.schema
+      }.filterValues { it is StringSchema && it.enumConstants.isNotEmpty() }
 
   private fun Operation.createRequestFunction(path: String, method: HttpMethod, pathItem: PathItem): FunSpec =
     FunSpec.builder(operationId).apply {
@@ -163,19 +166,23 @@ class RequestGenerator(
   }
 
   private fun FunSpec.Builder.attachParameters(operation: Operation, pathParameters: List<Parameter>) {
-    val allParams = (operation.parameters ?: emptyList()) + pathParameters
+    val allParams = ((operation.parameters ?: emptyList()) + pathParameters).filter { it.`$ref` == null }
     allParams.forEach { parameter ->
-      val parameterSchema = parameter.schema
       addParameter(
         if (parameter.schema is StringSchema && parameter.schema.enumConstants.isNotEmpty()) {
           ParameterSpec.builder(
             parameter.name.convertToCamelCase(),
-            ClassName(modelPackage, operation.operationId.capitalized().plus(parameter.name.capitalized()))
+            ClassName(
+              modelPackage,
+              operation.operationId.capitalized().plus(parameter.name.convertToCamelCase().capitalized())
+            )
           ).build()
         } else {
           ParameterSpec.builder(
             parameter.name.convertToCamelCase(),
-            parameterSchema.toKotlinTypeName(operation.operationId).copy(nullable = parameter.safeRequired.not())
+            // TODO: Fix hack -> parameter.content.values.first().schema
+            (parameter.schema ?: parameter.content.values.first().schema).toKotlinTypeName(operation.operationId)
+              .copy(nullable = parameter.safeRequired.not())
           ).build()
         }
       )
@@ -222,7 +229,7 @@ class RequestGenerator(
     }
   }
 
-  private fun Operation.collectPossibleResponseTypes(): List<TypeName> = responses.values.map { response ->
+  private fun Operation.collectPossibleResponseTypes(): List<TypeName?> = responses.values.map { response ->
     when {
       response.`$ref` != null -> ClassName(modelPackage, response.`$ref`.getRefKey())
       response.content != null -> {
@@ -239,7 +246,7 @@ class RequestGenerator(
         }
       }
 
-      else -> error("Unknown response type: $response")
+      else -> null
     }
   }
 
