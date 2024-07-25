@@ -23,12 +23,15 @@ dependencies {
   val kotlinPoetVersion: String by project
   val swaggerParserVersion: String by project
   val kotlinxSerializationVersion: String by project
+  val kotlinxDatetimeVersion: String by project
   val uuidVersion: String by project
 
   implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
   implementation("io.swagger.parser.v3:swagger-parser:$swaggerParserVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
   implementation("com.benasher44:uuid:$uuidVersion")
+
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
   implementation("io.ktor:ktor-client-core:$ktorVersion")
 

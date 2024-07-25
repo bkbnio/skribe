@@ -16,3 +16,5 @@ style:
     maxLineLength: 120
   UnnecessaryAbstractClass:
     active: false
+  ForbiddenComment:
+    active: false

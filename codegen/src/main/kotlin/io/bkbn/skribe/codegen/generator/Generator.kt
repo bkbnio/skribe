@@ -25,7 +25,9 @@ import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BinarySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
 import io.swagger.v3.oas.models.media.ComposedSchema
+import io.swagger.v3.oas.models.media.DateSchema
 import io.swagger.v3.oas.models.media.DateTimeSchema
+import io.swagger.v3.oas.models.media.EmailSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.MapSchema
 import io.swagger.v3.oas.models.media.NumberSchema
@@ -33,6 +35,8 @@ import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -160,7 +164,9 @@ internal sealed interface Generator {
   fun Schema<*>.toKotlinTypeName(operationId: String): TypeName = when (this) {
     is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(operationId))
     is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
-    is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
+    is DateSchema -> LocalDate::class.asTypeName()
+    is DateTimeSchema -> Instant::class.asTypeName()
+    is EmailSchema -> String::class.asTypeName()
     is IntegerSchema -> Int::class.asTypeName()
     is NumberSchema -> Number::class.asTypeName()
     is StringSchema -> {
@@ -183,24 +189,52 @@ internal sealed interface Generator {
   }
 
   @Suppress("CyclomaticComplexMethod")
-  fun Schema<*>.toKotlinTypeName(propertyName: String, parentType: ClassName): TypeName = when (this) {
-    is ArraySchema -> List::class.asTypeName().parameterizedBy(items.toKotlinTypeName(propertyName, parentType))
+  fun Schema<*>.toKotlinTypeName(
+    propertyName: String,
+    parentType: ClassName,
+    attachSerializer: Boolean = false
+  ): TypeName = when (this) {
+    is ArraySchema -> List::class.asTypeName()
+      .parameterizedBy(items.toKotlinTypeName(propertyName, parentType, attachSerializer = true))
+
     is MapSchema -> {
       when (additionalProperties) {
         is Boolean -> Map::class.asTypeName().parameterizedBy(String::class.asTypeName(), Any::class.asTypeName())
         is Schema<*> -> Map::class.asTypeName().parameterizedBy(
           String::class.asTypeName(),
-          (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType)
+          (additionalProperties as Schema<*>).toKotlinTypeName(propertyName, parentType, attachSerializer = true)
         )
 
         else -> error("Unknown schema type: $this")
       }
     }
 
-    is UUIDSchema -> ClassName("com.benasher44.uuid", "Uuid")
-    is DateTimeSchema -> String::class.asTypeName() // todo switch to kotlinx datetime
+    is UUIDSchema -> when (attachSerializer) {
+      false -> ClassName("com.benasher44.uuid", "Uuid")
+      true -> ClassName("com.benasher44.uuid", "Uuid").copy(
+        annotations = listOf(
+          AnnotationSpec.builder(Serializable::class).apply {
+            addMember("%T::class", uuidSerializerClassName)
+          }.build()
+        )
+      )
+    }
+    is DateSchema -> LocalDate::class.asTypeName()
+    is DateTimeSchema -> Instant::class.asTypeName()
+    is EmailSchema -> String::class.asTypeName()
     is IntegerSchema -> Int::class.asTypeName()
-    is NumberSchema -> Number::class.asTypeName()
+    is NumberSchema -> when (attachSerializer) {
+      false -> Number::class.asTypeName()
+      true -> Number::class.asTypeName().copy(
+        annotations = listOf(
+          AnnotationSpec.builder(Serializable::class).apply {
+            val numberSerializerClassName = ClassName(utilPackage, "NumberSerializer")
+            addMember("with = %T::class", numberSerializerClassName)
+          }.build()
+        )
+      )
+    }
+
     is StringSchema -> {
       when {
         this.enumConstants.isNotEmpty() -> parentType.nestedClass(propertyName.capitalized())
@@ -253,23 +287,23 @@ internal sealed interface Generator {
 
   fun ComposedSchema.toUnifiedSchema(): Schema<*> = when {
     allOf != null -> unifyAllOfSchema()
-    anyOf != null -> TODO()
-    oneOf != null -> TODO()
+    anyOf != null -> unifyAnyOfSchema()
+    oneOf != null -> unifyOneOfSchema()
     else -> error("Unknown composed schema type: $this")
   }
 
   fun ComposedSchema.unifyAllOfSchema(): Schema<*> {
-    require(allOf.all { it.`$ref` != null || it is ObjectSchema }) {
-      "Currently, all members of allOf must be references or Object Schemas"
-    }
     val refs = allOf.map {
-      if (it is ObjectSchema) {
-        it
-      } else {
-        openApi.components.schemas[it.`$ref`.getRefKey()]
+      when (it) {
+        is ObjectSchema -> it
+        is ComposedSchema -> it.toUnifiedSchema()
+        else -> when (openApi.components.schemas[it.`$ref`.getRefKey()]) {
+          is ObjectSchema -> openApi.components.schemas[it.`$ref`.getRefKey()]
+          is ComposedSchema -> (openApi.components.schemas[it.`$ref`.getRefKey()] as ComposedSchema).toUnifiedSchema()
+          else -> error("Unknown schema type")
+        }
       }
     }
-    require(refs.all { it is ObjectSchema }) { "Currently, all references in an allOf must point to ObjectSchemas" }
     val objectRefs = refs.map { it as ObjectSchema }
     val gigaSchema = ObjectSchema()
     objectRefs.forEach { it.propertiesOrEmpty.forEach { (name, schema) -> gigaSchema.addProperty(name, schema) } }
@@ -277,10 +311,42 @@ internal sealed interface Generator {
     return gigaSchema
   }
 
+  fun ComposedSchema.unifyOneOfSchema(): Schema<*> {
+    val refs = oneOf.map {
+      when (it) {
+        is ObjectSchema -> it
+        is ComposedSchema -> it.toUnifiedSchema()
+        else -> openApi.components.schemas[it.`$ref`.getRefKey()]
+      }
+    }
+//    val objectRefs = refs.map { it as ObjectSchema }
+    val gigaSchema = ObjectSchema()
+//    objectRefs.forEach { it.propertiesOrEmpty.forEach { (name, schema) -> gigaSchema.addProperty(name, schema) } }
+//    objectRefs.forEach { it.required?.forEach { propName -> gigaSchema.addRequiredItem(propName) } }
+    return gigaSchema
+  }
+
+  fun ComposedSchema.unifyAnyOfSchema(): Schema<*> {
+    val refs = anyOf.map {
+      when (it) {
+        is ObjectSchema -> it
+        is ComposedSchema -> it.toUnifiedSchema()
+        else -> openApi.components.schemas[it.`$ref`.getRefKey()]
+      }
+    }
+//    val objectRefs = refs.map { it as ObjectSchema }
+    val gigaSchema = ObjectSchema()
+//    objectRefs.forEach { it.propertiesOrEmpty.forEach { (name, schema) -> gigaSchema.addProperty(name, schema) } }
+//    objectRefs.forEach { it.required?.forEach { propName -> gigaSchema.addRequiredItem(propName) } }
+    return gigaSchema
+  }
+
   fun FileSpec.Builder.addSchemaType(name: String, schema: Schema<*>) {
     when (schema) {
       is UUIDSchema -> addTypeAlias(TypeAliasSpec.builder(name, ClassName("com.benasher44.uuid", "Uuid")).build())
-      is DateTimeSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build()) // Needs work
+      is DateSchema -> addTypeAlias(TypeAliasSpec.builder(name, LocalDate::class).build())
+      is DateTimeSchema -> addTypeAlias(TypeAliasSpec.builder(name, Instant::class).build())
+      is EmailSchema -> addTypeAlias(TypeAliasSpec.builder(name, String::class).build())
       is IntegerSchema -> addTypeAlias(TypeAliasSpec.builder(name, Int::class).build())
       is NumberSchema -> addTypeAlias(TypeAliasSpec.builder(name, Number::class).build())
       is ComposedSchema -> addType(schema.createComposedKotlinType(name))
