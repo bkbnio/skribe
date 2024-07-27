@@ -36,6 +36,13 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       // Assert
       files shouldHaveSize 181
     }
+    it("Can generate the client for the FactSet Prices API") {
+      // Act
+      val files = ApiClientGenerator.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
+
+      // Assert
+      files shouldHaveSize 93
+    }
   }
   describe("Code Compilation") {
     it("Can compile the client code for the Neon API") {
@@ -61,6 +68,44 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       // Arrange
       val tempDir = createTempDirectory()
       val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
+      files.forEach { it.writeTo(tempDir) }
+      val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
+      val compilation = KotlinCompilation().apply {
+        sources = sourceFiles
+        inheritClassPath = true
+        messageOutputStream = System.out
+        workingDir = tempDir.toFile()
+      }
+
+      // Act
+      val result = compilation.compile()
+
+      // Assert
+      result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+    it("Can compile the client code for the FactSet Prices API") {
+      // Arrange
+      val tempDir = createTempDirectory()
+      val files = ApiClientGenerator.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
+      files.forEach { it.writeTo(tempDir) }
+      val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
+      val compilation = KotlinCompilation().apply {
+        sources = sourceFiles
+        inheritClassPath = true
+        messageOutputStream = System.out
+        workingDir = tempDir.toFile()
+      }
+
+      // Act
+      val result = compilation.compile()
+
+      // Assert
+      result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+    it("Can compile the client code for the Alpaca Broker API") {
+      // Arrange
+      val tempDir = createTempDirectory()
+      val files = ApiClientGenerator.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {

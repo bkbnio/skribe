@@ -144,7 +144,7 @@ class RequestGenerator(
 
       receiver(HttpClient::class)
       addModifiers(KModifier.SUSPEND)
-      description?.let { addKdoc("%L", it) }
+      description?.let { addKdoc("%L", it.replace("/", "")) }
       addTypeHints(this@createRequestFunction)
       attachParameters(this@createRequestFunction, pathItem.parameters?.toList() ?: emptyList())
       val ktorMember = method.toKtorMemberName()
