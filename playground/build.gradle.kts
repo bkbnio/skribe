@@ -4,7 +4,7 @@ plugins {
   id("io.bkbn.sourdough.application.jvm")
   id("application")
   id("org.jetbrains.kotlinx.kover")
-  id("io.bkbn.skribe") version "0.3.3-SNAPSHOT"
+  id("io.bkbn.skribe") version "latest.integration"
 }
 
 dependencies {
