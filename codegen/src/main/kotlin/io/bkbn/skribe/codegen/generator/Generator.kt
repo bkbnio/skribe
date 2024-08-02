@@ -6,6 +6,5 @@ import io.bkbn.skribe.codegen.domain.SkribeSpec
 sealed interface Generator {
 
   context(SkribeSpec)
-  fun generate(packageName: String): List<FileSpec>
-
+  fun generate(): List<FileSpec>
 }

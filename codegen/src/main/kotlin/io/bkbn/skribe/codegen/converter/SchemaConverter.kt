@@ -14,6 +14,7 @@ import io.bkbn.skribe.codegen.domain.schema.SkribeReferenceSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeStringSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeUuidSchema
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToPascalCase
 import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.BooleanSchema
@@ -28,8 +29,9 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.media.UUIDSchema
 
-class SchemaConverter(private val packageName: String) : Converter<Map<String, Schema<*>>, List<SkribeSchema>> {
+data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchema>> {
 
+  context(ConverterMetadata)
   override fun convert(
     input: Map<String, Schema<*>>,
   ): List<SkribeSchema> = input.map { (name, schema) ->
@@ -57,20 +59,26 @@ class SchemaConverter(private val packageName: String) : Converter<Map<String, S
     }
   }
 
+  context(ConverterMetadata)
   private fun ObjectSchema.toSkribeObjectSchema(name: String): SkribeObjectSchema = SkribeObjectSchema(
     name = name,
     required = required ?: emptyList(),
     // TODO: What to generate in case of null properties?
     properties = properties?.let {
-      SchemaConverter(name).convert(it).associateBy { s -> SkribeObjectSchema.PropertyName(s.name) }
+      val updatedMetadata = ConverterMetadata(
+        rootPackage = rootPackage,
+        currentPackage = name.convertToPascalCase() // TODO: Use addressable name
+      )
+      with(updatedMetadata) { convert(it).associateBy { s -> SkribeObjectSchema.PropertyName(s.name) } }
     } ?: emptyMap(),
-    modelPackage = packageName,
+    modelPackage = currentPackage,
   )
 
+  context(ConverterMetadata)
   private fun StringSchema.toSkribeEnumSchema(name: String): SkribeEnumSchema = SkribeEnumSchema(
     name = name,
     values = enum?.map { SkribeEnumSchema.SkribeEnumValue(it) } ?: error("Schema $name is not an enum type."),
-    modelPackage = packageName,
+    modelPackage = currentPackage
   )
 
   private fun ComposedSchema.toSkribeComposedSchema(name: String): SkribeComposedSchema = SkribeComposedSchema(
@@ -85,9 +93,10 @@ class SchemaConverter(private val packageName: String) : Converter<Map<String, S
     name = name,
   )
 
+  context(ConverterMetadata)
   private fun UUIDSchema.toSkribeUuidSchema(name: String): SkribeUuidSchema = SkribeUuidSchema(
     name = name,
-    utilPackage = packageName.plus(".util")
+    utilPackage = rootPackage.plus(".util")
   )
 
   private fun Schema<*>.toSkribeReferenceSchema(name: String): SkribeReferenceSchema = SkribeReferenceSchema(

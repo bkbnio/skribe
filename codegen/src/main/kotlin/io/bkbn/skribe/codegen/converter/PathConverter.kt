@@ -5,6 +5,8 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 
 data object PathConverter : Converter<Map<String, PathItem>, List<SkribePath>> {
+
+  context(ConverterMetadata)
   override fun convert(input: Map<String, PathItem>): List<SkribePath> = input.map { (path, item) ->
     val paths = mutableListOf<SkribePath>()
     item.get?.let { paths.add(createOperation(SkribePath.Operation.GET, path, it)) }

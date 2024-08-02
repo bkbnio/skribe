@@ -16,39 +16,47 @@ import kotlinx.serialization.Serializable
 data object ModelGenerator : Generator {
 
   context(SkribeSpec)
-  override fun generate(packageName: String): List<FileSpec> =
+  override fun generate(): List<FileSpec> =
     schemas.filterIsInstance<SkribeObjectSchema>().map { schema ->
-      FileSpec.builder(packageName, schema.addressableName()).apply {
+      val modelPackage = "$rootPackage.model"
+      FileSpec.builder(modelPackage, schema.addressableName()).apply {
         with(schema) { addType(toModelType()) }
       }.build()
     }
-
 
   context(SkribeObjectSchema)
   private fun toModelType(): TypeSpec {
     return TypeSpec.classBuilder(addressableName()).apply {
       addModifiers(KModifier.DATA)
       addAnnotation(AnnotationSpec.builder(Serializable::class).build())
-      primaryConstructor(FunSpec.constructorBuilder().apply {
-        properties.forEach { (name, schema) ->
-          addParameter(name.addressableName(), schema.toKotlinTypeName())
-        }
-      }.build())
+      primaryConstructor(
+        FunSpec.constructorBuilder().apply {
+          properties.forEach { (name, schema) ->
+            addParameter(name.addressableName(), schema.toKotlinTypeName())
+          }
+        }.build()
+      )
       properties.forEach { (name, schema) ->
-        addProperty(PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName()).apply {
-          initializer(name.addressableName())
-          if (name.requiresSerialization()) {
-            addAnnotation(AnnotationSpec.builder(SerialName::class).apply {
-              addMember("%S", name.value)
-            }.build())
-          }
-          if (schema.requiresSerialization) {
-            require(schema is SerializableSchema) { "Schema $schema does not implement SerializableSchema" }
-            addAnnotation(AnnotationSpec.builder(Serializable::class).apply {
-              addMember("with = %T::class", (schema as SerializableSchema).serializerClassName)
-            }.build())
-          }
-        }.build())
+        addProperty(
+          PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName()).apply {
+            initializer(name.addressableName())
+            if (name.requiresSerialization()) {
+              addAnnotation(
+                AnnotationSpec.builder(SerialName::class).apply {
+                  addMember("%S", name.value)
+                }.build()
+              )
+            }
+            if (schema.requiresSerialization) {
+              require(schema is SerializableSchema) { "Schema $schema does not implement SerializableSchema" }
+              addAnnotation(
+                AnnotationSpec.builder(Serializable::class).apply {
+                  addMember("with = %T::class", (schema as SerializableSchema).serializerClassName)
+                }.build()
+              )
+            }
+          }.build()
+        )
       }
       properties.values.filterIsInstance<SkribeObjectSchema>().forEach { schema ->
         with(schema) {

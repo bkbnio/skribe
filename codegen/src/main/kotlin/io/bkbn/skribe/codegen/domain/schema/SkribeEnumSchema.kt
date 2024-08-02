@@ -7,7 +7,7 @@ data class SkribeEnumSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
   val values: List<SkribeEnumValue>,
-  private val modelPackage: String,
+  val modelPackage: String,
 ) : SkribeSchema {
   private val enumName = SkribeEnumName(name)
   fun addressableName(): String = enumName.value.convertToPascalCase()

@@ -14,9 +14,9 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 
 data object SerializerGenerator : Generator {
-  context(SkribeSpec) override fun generate(packageName: String): List<FileSpec> {
+  context(SkribeSpec) override fun generate(): List<FileSpec> {
     return listOf(
-      FileSpec.builder(packageName, "Serializers").apply {
+      FileSpec.builder("$rootPackage.util", "Serializers").apply {
         generateUuidSerializer()
       }.build()
     )
@@ -24,15 +24,17 @@ data object SerializerGenerator : Generator {
 
   private fun FileSpec.Builder.generateUuidSerializer() {
     val uuidType = ClassName("com.benasher44.uuid", "Uuid")
-    addType(TypeSpec.objectBuilder("UuidSerializer").apply {
-      addSuperinterface(KSerializer::class.asClassName().parameterizedBy(uuidType))
-      addProperty(
-        PropertySpec.builder("descriptor", SerialDescriptor::class).apply {
-          addModifiers(KModifier.OVERRIDE)
-          val psd = MemberName("kotlinx.serialization.descriptors", "PrimitiveSerialDescriptor")
-          initializer("%M(%S, %T.STRING)", psd, "UUID", PrimitiveKind::class)
-        }.build()
-      )
-    }.build())
+    addType(
+      TypeSpec.objectBuilder("UuidSerializer").apply {
+        addSuperinterface(KSerializer::class.asClassName().parameterizedBy(uuidType))
+        addProperty(
+          PropertySpec.builder("descriptor", SerialDescriptor::class).apply {
+            addModifiers(KModifier.OVERRIDE)
+            val psd = MemberName("kotlinx.serialization.descriptors", "PrimitiveSerialDescriptor")
+            initializer("%M(%S, %T.STRING)", psd, "UUID", PrimitiveKind::class)
+          }.build()
+        )
+      }.build()
+    )
   }
 }

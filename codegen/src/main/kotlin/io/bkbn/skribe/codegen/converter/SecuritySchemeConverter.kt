@@ -4,6 +4,8 @@ import io.bkbn.skribe.codegen.domain.SkribeSecurityScheme
 import io.swagger.v3.oas.models.security.SecurityScheme
 
 data object SecuritySchemeConverter : Converter<Map<String, SecurityScheme>, List<SkribeSecurityScheme>> {
+
+  context(ConverterMetadata)
   override fun convert(input: Map<String, SecurityScheme>): List<SkribeSecurityScheme> = input.map { (name, scheme) ->
     SkribeSecurityScheme(
       type = when (scheme.type) {

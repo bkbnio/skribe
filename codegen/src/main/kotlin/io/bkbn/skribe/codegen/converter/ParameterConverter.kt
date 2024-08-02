@@ -4,6 +4,8 @@ import io.bkbn.skribe.codegen.domain.SkribeParameter
 import io.swagger.v3.oas.models.parameters.Parameter
 
 data object ParameterConverter : Converter<Map<String, Parameter>, List<SkribeParameter>> {
+
+  context(ConverterMetadata)
   override fun convert(input: Map<String, Parameter>): List<SkribeParameter> = input.map { (name, parameter) ->
     SkribeParameter(
       name = name,
