@@ -1,4 +1,5 @@
 import org.gradle.kotlin.dsl.detekt
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm")
@@ -10,6 +11,12 @@ plugins {
   id("maven-publish")
   id("java-library")
   id("signing")
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+  kotlinOptions {
+    freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
+  }
 }
 
 detekt {

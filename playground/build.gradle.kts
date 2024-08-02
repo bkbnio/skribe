@@ -29,7 +29,7 @@ sourceSets {
 }
 
 skribe {
-  specUrl.set(file("../codegen/src/test/resources/factset-prices.yml").absoluteFile.toString())
+  specUrl.set(file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString())
   outputDir.set("$projectDir/src/main/gen")
   basePackage.set("io.bkbn.sourdough.clients")
   shouldCleanDir.set(true)

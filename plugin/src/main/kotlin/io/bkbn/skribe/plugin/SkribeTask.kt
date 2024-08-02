@@ -1,6 +1,6 @@
 package io.bkbn.skribe.plugin
 
-import io.bkbn.skribe.codegen.generator.ApiClientGenerator
+import io.bkbn.skribe.codegen.Skribe
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -33,7 +33,7 @@ abstract class SkribeTask : DefaultTask() {
       outputDirPath.toFile().deleteRecursively()
     }
 
-    val fileSpecs = ApiClientGenerator.generate(specUrl.get(), basePackage.get())
+    val fileSpecs = Skribe.generate(specUrl.get(), basePackage.get())
     logger.quiet("Writing files to ${outputDir.get()}")
     fileSpecs.forEach { it.writeTo(outputDirPath) }
   }
