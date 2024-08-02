@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.asClassName
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 sealed interface SkribeSchema {
   val name: String
@@ -109,4 +110,11 @@ data class SkribeNumberSchema(
 ) : SkribeSchema, SerializableSchema {
   override fun toKotlinTypeName(): TypeName = Number::class.asClassName()
   override val serializerTypeName: TypeName = ClassName(utilPackage, "NumberSerializer")
+}
+
+data class SkribeFreeFormSchema(
+  override val name: String,
+  override val requiresSerialization: Boolean = false,
+) : SkribeSchema {
+  override fun toKotlinTypeName(): TypeName = JsonElement::class.asClassName()
 }

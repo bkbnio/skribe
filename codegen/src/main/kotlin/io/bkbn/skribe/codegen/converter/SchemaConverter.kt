@@ -7,6 +7,7 @@ import io.bkbn.skribe.codegen.domain.schema.SkribeDateSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeDateTimeSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeEmailSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeEnumSchema
+import io.bkbn.skribe.codegen.domain.schema.SkribeFreeFormSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeIntegerSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeNumberSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeObjectSchema
@@ -39,7 +40,11 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
       is ArraySchema -> schema.toSkribeArraySchema(name)
       is BooleanSchema -> schema.toSkribeBooleanSchema(name)
       is ComposedSchema -> schema.toSkribeComposedSchema(name)
-      is ObjectSchema -> schema.toSkribeObjectSchema(name)
+      is ObjectSchema -> when {
+        schema.properties == null -> schema.toFreeFormSchema(name)
+        else -> schema.toSkribeObjectSchema(name)
+      }
+
       is IntegerSchema -> schema.toSkribeIntegerSchema(name)
       is DateSchema -> schema.toSkribeDateSchema(name)
       is DateTimeSchema -> schema.toSkribeDateTimeSchema(name)
@@ -118,6 +123,7 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
     name = name,
   )
 
+
   private fun IntegerSchema.toSkribeIntegerSchema(name: String): SkribeIntegerSchema = SkribeIntegerSchema(
     name = name,
   )
@@ -130,5 +136,9 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
   private fun NumberSchema.toSkribeNumberSchema(name: String): SkribeNumberSchema = SkribeNumberSchema(
     name = name,
     utilPackage = rootPackage.plus(".util")
+  )
+
+  private fun ObjectSchema.toFreeFormSchema(name: String): SkribeFreeFormSchema = SkribeFreeFormSchema(
+    name = name,
   )
 }

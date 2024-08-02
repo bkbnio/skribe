@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.bkbn.skribe.codegen.domain.SkribeSpec
 import io.bkbn.skribe.codegen.domain.schema.SerializableSchema
+import io.bkbn.skribe.codegen.domain.schema.SkribeArraySchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeEnumSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeObjectSchema
 import io.bkbn.skribe.codegen.domain.schema.SkribeSchema
@@ -46,6 +47,8 @@ data object ModelGenerator : Generator {
     properties.forEach { (name, schema) ->
       addProperty(constructModelProperty(name, schema))
     }
+
+    // TODO: Getting unwieldy, also won't work recursively
     properties.values.filterIsInstance<SkribeObjectSchema>().forEach { schema ->
       with(schema) {
         addType(toModelType())
@@ -56,9 +59,21 @@ data object ModelGenerator : Generator {
         addType(EnumGenerator.toEnumType())
       }
     }
+    properties.values.filterIsInstance<SkribeArraySchema>().forEach { schema ->
+      if (schema.items is SkribeObjectSchema) {
+        with(schema.items) {
+          addType(toModelType())
+        }
+      }
+      if (schema.items is SkribeEnumSchema) {
+        with(schema.items) {
+          addType(EnumGenerator.toEnumType())
+        }
+      }
+    }
   }
 
-  private fun constructModelProperty(name: SkribeObjectSchema.PropertyName, schema: SkribeSchema): PropertySpec {
+  private fun constructModelProperty(name: SkribeObjectSchema.PropertyName, schema: SkribeSchema) =
     PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName()).apply {
       initializer(name.addressableName())
       if (name.requiresSerialization()) {
@@ -77,5 +92,4 @@ data object ModelGenerator : Generator {
         )
       }
     }.build()
-  }
 }
