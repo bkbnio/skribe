@@ -51,7 +51,7 @@ data object ModelGenerator : Generator {
               require(schema is SerializableSchema) { "Schema $schema does not implement SerializableSchema" }
               addAnnotation(
                 AnnotationSpec.builder(Serializable::class).apply {
-                  addMember("with = %T::class", (schema as SerializableSchema).serializerClassName)
+                  addMember("with = %T::class", (schema as SerializableSchema).serializerTypeName)
                 }.build()
               )
             }

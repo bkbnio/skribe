@@ -89,8 +89,10 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
     name = name,
   )
 
+  context(ConverterMetadata)
   private fun ArraySchema.toSkribeArraySchema(name: String): SkribeArraySchema = SkribeArraySchema(
     name = name,
+    items = convert(mapOf("items" to items)).first()
   )
 
   context(ConverterMetadata)
@@ -124,7 +126,9 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
     name = name,
   )
 
+  context(ConverterMetadata)
   private fun NumberSchema.toSkribeNumberSchema(name: String): SkribeNumberSchema = SkribeNumberSchema(
     name = name,
+    utilPackage = rootPackage.plus(".util")
   )
 }
