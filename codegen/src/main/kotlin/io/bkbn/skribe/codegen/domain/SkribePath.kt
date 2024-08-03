@@ -1,6 +1,5 @@
 package io.bkbn.skribe.codegen.domain
 
-import io.bkbn.skribe.codegen.domain.schema.SkribeSchema
 import io.bkbn.skribe.codegen.utils.StringUtils.convertToCamelCase
 import io.bkbn.skribe.codegen.utils.StringUtils.convertToPascalCase
 
@@ -9,7 +8,8 @@ data class SkribePath(
   val name: PathName,
   val description: String?,
   val operation: Operation,
-  val requestBody: RequestBody?,
+  val requestBody: SkribeRequest?,
+  val responses: List<SkribeResponse>,
 ) {
 
   @JvmInline
@@ -28,9 +28,4 @@ data class SkribePath(
     OPTIONS,
     TRACE
   }
-
-  data class RequestBody(
-    val required: Boolean,
-    val schema: SkribeSchema,
-  )
 }

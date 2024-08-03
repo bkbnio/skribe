@@ -34,6 +34,7 @@ data object PathConverter : Converter<Map<String, PathItem>, List<SkribePath>> {
           }),
       description = operation.description,
       requestBody = operation.requestBody?.let { RequestBodyConverter.convert(it) },
+      responses = operation.responses?.let { ResponseConverter.convert(it) } ?: emptyList(),
     )
   }
 }

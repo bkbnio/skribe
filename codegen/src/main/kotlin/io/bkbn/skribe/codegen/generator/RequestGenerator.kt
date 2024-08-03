@@ -7,6 +7,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.asTypeName
 import io.bkbn.skribe.codegen.domain.SkribePath
+import io.bkbn.skribe.codegen.domain.SkribeResponse
 import io.bkbn.skribe.codegen.domain.SkribeSpec
 import io.ktor.client.HttpClient
 import io.ktor.client.statement.HttpResponse
@@ -36,6 +37,8 @@ data object RequestGenerator : Generator {
         endControlFlow()
       }.build())
       description?.let { addKdoc(it) }
+      if (this@SkribePath.responses.isNotEmpty()) { addKdoc("\n\nResponses:\n") }
+      this@SkribePath.responses.forEach { response -> addPotentialResponse(response) }
     }.build()
   }
 
@@ -53,19 +56,16 @@ data object RequestGenerator : Generator {
     requestBody ?: return
     addStatement("%M(body)", MemberName(KTOR_REQUEST_PACKAGE, "setBody"))
   }
-}
 
-/*
-/**
- * Return the response data for the underlying batch request that is specified by the id. Body can
- * be one of the following types:
- * 	- [io.bkbn.sourdough.factset.prices.models.BatchDataResponse]
- * 	- [io.bkbn.sourdough.factset.prices.models.BatchStatusResponse]
- * 	- [io.bkbn.sourdough.factset.prices.models.`404`]
- */
-public suspend fun HttpClient.getBatchDataWithPost(body: BatchDataRequest) =
-    post("""/batch/v1/result""") {
-  setBody(body)
+  context(SkribePath, SkribeSpec)
+  private fun FunSpec.Builder.addPotentialResponse(response: SkribeResponse) {
+    // TODO: Feels weird
+    if (response.statusCode == null) return
+    addKdoc(
+      "%L -> [%T] %L\n",
+      response.statusCode,
+      response.schema?.toKotlinTypeName() ?: Unit::class,
+      response.description ?: ""
+    )
+  }
 }
-
- */
