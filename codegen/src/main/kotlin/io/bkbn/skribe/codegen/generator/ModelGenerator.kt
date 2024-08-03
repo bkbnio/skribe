@@ -26,7 +26,7 @@ data object ModelGenerator : Generator {
       }.build()
     }
 
-  context(SkribeObjectSchema)
+  context(SkribeObjectSchema, SkribeSpec)
   private fun toModelType(): TypeSpec {
     return TypeSpec.classBuilder(addressableName()).apply {
       addModifiers(KModifier.DATA)
@@ -35,8 +35,8 @@ data object ModelGenerator : Generator {
     }.build()
   }
 
-  context(TypeSpec.Builder, SkribeObjectSchema)
-  private fun constructModelProperties() {
+  context(SkribeObjectSchema, SkribeSpec)
+  private fun TypeSpec.Builder.constructModelProperties() {
     primaryConstructor(
       FunSpec.constructorBuilder().apply {
         properties.forEach { (name, schema) ->
@@ -73,6 +73,7 @@ data object ModelGenerator : Generator {
     }
   }
 
+  context(SkribeSpec)
   private fun constructModelProperty(name: SkribeObjectSchema.PropertyName, schema: SkribeSchema) =
     PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName()).apply {
       initializer(name.addressableName())

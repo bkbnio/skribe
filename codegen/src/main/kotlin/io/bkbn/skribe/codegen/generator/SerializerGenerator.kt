@@ -1,5 +1,6 @@
 package io.bkbn.skribe.codegen.generator
 
+import com.benasher44.uuid.Uuid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -42,6 +43,7 @@ data object SerializerGenerator : Generator {
         addFunction(
           FunSpec.builder("deserialize").apply {
             addModifiers(KModifier.OVERRIDE)
+            returns(Uuid::class)
             addParameter("decoder", Decoder::class)
             addStatement("return %T.fromString(decoder.decodeString())", uuidType)
           }.build()
@@ -75,6 +77,7 @@ data object SerializerGenerator : Generator {
         addFunction(
           FunSpec.builder("deserialize").apply {
             addModifiers(KModifier.OVERRIDE)
+            returns(Double::class)
             addParameter("decoder", Decoder::class)
             addStatement("return decoder.decodeDouble()")
           }.build()

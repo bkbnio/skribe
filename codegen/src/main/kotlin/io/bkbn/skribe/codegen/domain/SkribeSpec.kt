@@ -9,4 +9,6 @@ data class SkribeSpec(
   val paths: List<SkribePath>,
   val schemas: List<SkribeSchema>,
   val securitySchemes: List<SkribeSecurityScheme>,
-)
+) {
+  val modelPackage: String = "$rootPackage.model"
+}

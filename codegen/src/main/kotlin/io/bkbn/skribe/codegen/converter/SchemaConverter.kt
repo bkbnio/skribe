@@ -68,22 +68,21 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
   private fun ObjectSchema.toSkribeObjectSchema(name: String): SkribeObjectSchema = SkribeObjectSchema(
     name = name,
     required = required ?: emptyList(),
-    // TODO: What to generate in case of null properties?
     properties = properties?.let {
       val updatedMetadata = ConverterMetadata(
         rootPackage = rootPackage,
         currentPackage = name.convertToPascalCase() // TODO: Use addressable name
       )
       with(updatedMetadata) { convert(it).associateBy { s -> SkribeObjectSchema.PropertyName(s.name) } }
-    } ?: emptyMap(),
-    modelPackage = currentPackage,
+    } ?: error("Schema $name does not have properties, should be registered as a FreeFormSchema"),
+    currentPackage = currentPackage,
   )
 
   context(ConverterMetadata)
   private fun StringSchema.toSkribeEnumSchema(name: String): SkribeEnumSchema = SkribeEnumSchema(
     name = name,
     values = enum?.map { SkribeEnumSchema.SkribeEnumValue(it) } ?: error("Schema $name is not an enum type."),
-    modelPackage = currentPackage
+    currentPackage = currentPackage,
   )
 
   private fun ComposedSchema.toSkribeComposedSchema(name: String): SkribeComposedSchema = SkribeComposedSchema(

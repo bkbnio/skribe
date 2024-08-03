@@ -1,6 +1,7 @@
 package io.bkbn.skribe.codegen.converter
 
 import io.bkbn.skribe.codegen.domain.SkribePath
+import io.bkbn.skribe.codegen.utils.StringUtils.capitalized
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 
@@ -16,13 +17,23 @@ data object PathConverter : Converter<Map<String, PathItem>, List<SkribePath>> {
     item.patch?.let { paths.add(createOperation(SkribePath.Operation.PATCH, path, it)) }
     item.head?.let { paths.add(createOperation(SkribePath.Operation.HEAD, path, it)) }
     item.options?.let { paths.add(createOperation(SkribePath.Operation.OPTIONS, path, it)) }
+    item.trace?.let { paths.add(createOperation(SkribePath.Operation.TRACE, path, it)) }
     paths
   }.flatten()
 
+  context(ConverterMetadata)
   private fun createOperation(operationType: SkribePath.Operation, path: String, operation: Operation): SkribePath {
     return SkribePath(
       path = path,
       operation = operationType,
+      name = SkribePath.PathName(operation.operationId
+        ?: operation.summary.split(" ")
+          .filterNot { it.isEmpty() }
+          .joinToString("") {
+            it.capitalized()
+          }),
+      description = operation.description,
+      requestBody = operation.requestBody?.let { RequestBodyConverter.convert(it) },
     )
   }
 }
