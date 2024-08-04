@@ -38,12 +38,14 @@ data object RequestGenerator : Generator {
       addModifiers(KModifier.SUSPEND)
       addRequestBodyIfPresent()
       addParametersIfPresent()
-      addCode(CodeBlock.builder().apply {
-        beginControlFlow("return %M(%P)", operation.toRequestMethod(), path)
-        setBodyInRequestIfPresent()
-        addParametersToRequestIfPresent()
-        endControlFlow()
-      }.build())
+      addCode(
+        CodeBlock.builder().apply {
+          beginControlFlow("return %M(%P)", operation.toRequestMethod(), path)
+          setBodyInRequestIfPresent()
+          addParametersToRequestIfPresent()
+          endControlFlow()
+        }.build()
+      )
       description?.let { addKdoc(it) }
       if (this@SkribePath.responses.isNotEmpty()) {
         addKdoc("\n\nResponses:\n")

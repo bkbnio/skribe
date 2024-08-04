@@ -51,9 +51,13 @@ data class SkribeArraySchema(
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = List::class.asClassName().parameterizedBy(
     when (items.requiresSerialization) {
-      true -> items.toKotlinTypeName().copy(annotations = listOf(AnnotationSpec.builder(Serializable::class).apply {
-        addMember("with = %T::class", (items as SerializableSchema).serializerTypeName)
-      }.build()))
+      true -> items.toKotlinTypeName().copy(
+        annotations = listOf(
+          AnnotationSpec.builder(Serializable::class).apply {
+            addMember("with = %T::class", (items as SerializableSchema).serializerTypeName)
+          }.build()
+        )
+      )
 
       false -> items.toKotlinTypeName()
     }

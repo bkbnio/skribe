@@ -33,17 +33,23 @@ data object PathConverter : Converter<Map<String, PathItem>, List<SkribePath>> {
     return SkribePath(
       path = path,
       operation = operationType,
-      name = SkribePath.PathName(operation.operationId
-        ?: operation.summary.split(" ")
-          .filterNot { it.isEmpty() }
-          .joinToString("") {
-            it.capitalized()
-          }),
+      name = SkribePath.PathName(
+        operation.operationId
+          ?: operation.summary.split(" ")
+            .filterNot { it.isEmpty() }
+            .joinToString("") {
+              it.capitalized()
+            }
+      ),
       description = operation.description,
       requestBody = operation.requestBody?.let { RequestBodyConverter.convert(it) },
       responses = operation.responses?.let { ResponseConverter.convert(it) } ?: emptyList(),
       pathParameters = pathParameters.associateBy { it.name ?: it.`$ref` }.let { ParameterConverter.convert(it) },
-      operationParameters = operation.parameters?.associateBy { it.name ?: it.`$ref` }?.let { ParameterConverter.convert(it) }
+      operationParameters = operation.parameters?.associateBy { it.name ?: it.`$ref` }?.let {
+        ParameterConverter.convert(
+          it
+        )
+      }
         ?: emptyList(),
     )
   }

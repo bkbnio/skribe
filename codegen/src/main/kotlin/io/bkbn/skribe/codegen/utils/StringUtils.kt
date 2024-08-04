@@ -41,5 +41,4 @@ object StringUtils {
   private fun String.isCamelCase() = matches(Regex("^[a-z]+([A-Z][a-z0-9]+)*$"))
   private fun String.isPascalCase() = matches(Regex("^[A-Z][a-z0-9]+([A-Z][a-z0-9]+)*$"))
   private fun String.sanitize(): String = trim().replace(Regex("[\\s.-]+"), "_")
-
 }

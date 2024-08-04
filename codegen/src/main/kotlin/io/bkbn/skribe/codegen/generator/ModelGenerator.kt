@@ -40,14 +40,15 @@ data object ModelGenerator : Generator {
     primaryConstructor(
       FunSpec.constructorBuilder().apply {
         properties.forEach { (name, schema) ->
-          addParameter(ParameterSpec.builder(
-            name.addressableName(),
-            schema.toKotlinTypeName().copy(nullable = name.value !in required)
-          ).apply {
-            if (name.value !in required) {
-              defaultValue("null")
-            }
-          }.build()
+          addParameter(
+            ParameterSpec.builder(
+              name.addressableName(),
+              schema.toKotlinTypeName().copy(nullable = name.value !in required)
+            ).apply {
+              if (name.value !in required) {
+                defaultValue("null")
+              }
+            }.build()
           )
         }
       }.build()

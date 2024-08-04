@@ -122,7 +122,6 @@ data object SchemaConverter : Converter<Map<String, Schema<*>>, List<SkribeSchem
     name = name,
   )
 
-
   private fun IntegerSchema.toSkribeIntegerSchema(name: String): SkribeIntegerSchema = SkribeIntegerSchema(
     name = name,
   )

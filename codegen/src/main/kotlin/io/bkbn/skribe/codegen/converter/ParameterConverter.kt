@@ -1,7 +1,7 @@
 package io.bkbn.skribe.codegen.converter
 
-import io.bkbn.skribe.codegen.domain.SkribeParameterLiteral
 import io.bkbn.skribe.codegen.domain.SkribeParameter
+import io.bkbn.skribe.codegen.domain.SkribeParameterLiteral
 import io.bkbn.skribe.codegen.domain.SkribeParameterReference
 import io.swagger.v3.oas.models.parameters.Parameter
 
