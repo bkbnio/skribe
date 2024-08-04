@@ -20,6 +20,8 @@ sealed interface SkribeSchema {
   fun toKotlinTypeName(): TypeName
 }
 
+sealed interface SkribeScalarSchema : SkribeSchema
+
 sealed interface SerializableSchema {
   val utilPackage: String
   val serializerTypeName: TypeName
@@ -36,7 +38,7 @@ data class SkribeComposedSchema(
 data class SkribeStringSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = String::class.asClassName()
 }
@@ -62,7 +64,7 @@ data class SkribeUuidSchema(
   override val name: String,
   override val requiresSerialization: Boolean = true,
   override val utilPackage: String,
-) : SkribeSchema, SerializableSchema {
+) : SkribeScalarSchema, SerializableSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = ClassName("com.benasher44.uuid", "Uuid")
   override val serializerTypeName: TypeName = ClassName(utilPackage, "UuidSerializer")
@@ -80,7 +82,7 @@ data class SkribeReferenceSchema(
 data class SkribeDateSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = LocalDate::class.asClassName()
 }
@@ -88,7 +90,7 @@ data class SkribeDateSchema(
 data class SkribeDateTimeSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = Instant::class.asClassName()
 }
@@ -96,7 +98,7 @@ data class SkribeDateTimeSchema(
 data class SkribeBooleanSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = Boolean::class.asClassName()
 }
@@ -104,7 +106,7 @@ data class SkribeBooleanSchema(
 data class SkribeIntegerSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = Int::class.asClassName()
 }
@@ -112,7 +114,7 @@ data class SkribeIntegerSchema(
 data class SkribeEmailSchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
-) : SkribeSchema {
+) : SkribeScalarSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = String::class.asClassName()
 }
@@ -121,7 +123,7 @@ data class SkribeNumberSchema(
   override val name: String,
   override val requiresSerialization: Boolean = true,
   override val utilPackage: String,
-) : SkribeSchema, SerializableSchema {
+) : SkribeScalarSchema, SerializableSchema {
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = Number::class.asClassName()
   override val serializerTypeName: TypeName = ClassName(utilPackage, "NumberSerializer")

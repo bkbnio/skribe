@@ -7,6 +7,7 @@ import io.bkbn.skribe.codegen.generator.EnumGenerator
 import io.bkbn.skribe.codegen.generator.ModelGenerator
 import io.bkbn.skribe.codegen.generator.RequestGenerator
 import io.bkbn.skribe.codegen.generator.SerializerGenerator
+import io.bkbn.skribe.codegen.generator.TypeAliasGenerator
 import io.swagger.parser.OpenAPIParser
 
 object Skribe {
@@ -21,8 +22,9 @@ object Skribe {
       val models = ModelGenerator.generate()
       val serializers = SerializerGenerator.generate()
       val requests = RequestGenerator.generate()
+      val typeAliases = TypeAliasGenerator.generate()
 
-      enums + models + serializers + requests
+      enums + models + serializers + requests + typeAliases
     }
   }
 }

@@ -21,7 +21,6 @@ data object ModelGenerator : Generator {
   context(SkribeSpec)
   override fun generate(): List<FileSpec> =
     schemas.filterIsInstance<SkribeObjectSchema>().map { schema ->
-      val modelPackage = "$rootPackage.model"
       FileSpec.builder(modelPackage, schema.addressableName()).apply {
         with(schema) { addType(toModelType()) }
       }.build()
