@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asTypeName
 import io.bkbn.skribe.codegen.domain.SkribeParameter
 import io.bkbn.skribe.codegen.domain.SkribeParameterLiteral
@@ -111,9 +112,16 @@ data object RequestGenerator : Generator {
 
   private fun FunSpec.Builder.addParameterToRequest(param: SkribeParameterLiteral) {
     addParameter(
-      param.name?.addressableName() ?: param.componentName,
-      String::class.asTypeName().copy(nullable = !param.required)
-    ) // TODO: Support other types
+      ParameterSpec.builder(
+        param.name?.addressableName() ?: param.componentName,
+        // TODO: Support other types
+        String::class.asTypeName().copy(nullable = !param.required)
+      ).apply {
+        if (!param.required) {
+          defaultValue("null")
+        }
+      }.build()
+    )
   }
 
   private fun List<SkribeParameter>.findParameterByName(name: String): SkribeParameterLiteral? =

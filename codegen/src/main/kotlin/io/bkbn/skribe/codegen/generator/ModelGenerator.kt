@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.bkbn.skribe.codegen.domain.SkribeSpec
@@ -40,7 +41,15 @@ data object ModelGenerator : Generator {
     primaryConstructor(
       FunSpec.constructorBuilder().apply {
         properties.forEach { (name, schema) ->
-          addParameter(name.addressableName(), schema.toKotlinTypeName())
+          addParameter(ParameterSpec.builder(
+            name.addressableName(),
+            schema.toKotlinTypeName().copy(nullable = name.value !in required)
+          ).apply {
+            if (name.value !in required) {
+              defaultValue("null")
+            }
+          }.build()
+          )
         }
       }.build()
     )
@@ -73,24 +82,25 @@ data object ModelGenerator : Generator {
     }
   }
 
-  context(SkribeSpec)
+  context(SkribeSpec, SkribeObjectSchema)
   private fun constructModelProperty(name: SkribeObjectSchema.PropertyName, schema: SkribeSchema) =
-    PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName()).apply {
-      initializer(name.addressableName())
-      if (name.requiresSerialization()) {
-        addAnnotation(
-          AnnotationSpec.builder(SerialName::class).apply {
-            addMember("%S", name.value)
-          }.build()
-        )
-      }
-      if (schema.requiresSerialization) {
-        require(schema is SerializableSchema) { "Schema $schema does not implement SerializableSchema" }
-        addAnnotation(
-          AnnotationSpec.builder(Serializable::class).apply {
-            addMember("with = %T::class", (schema as SerializableSchema).serializerTypeName)
-          }.build()
-        )
-      }
-    }.build()
+    PropertySpec.builder(name.addressableName(), schema.toKotlinTypeName().copy(nullable = name.value !in required))
+      .apply {
+        initializer(name.addressableName())
+        if (name.requiresSerialization()) {
+          addAnnotation(
+            AnnotationSpec.builder(SerialName::class).apply {
+              addMember("%S", name.value)
+            }.build()
+          )
+        }
+        if (schema.requiresSerialization) {
+          require(schema is SerializableSchema) { "Schema $schema does not implement SerializableSchema" }
+          addAnnotation(
+            AnnotationSpec.builder(Serializable::class).apply {
+              addMember("with = %T::class", (schema as SerializableSchema).serializerTypeName)
+            }.build()
+          )
+        }
+      }.build()
 }
