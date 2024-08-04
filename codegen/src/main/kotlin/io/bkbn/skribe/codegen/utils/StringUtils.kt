@@ -7,7 +7,7 @@ object StringUtils {
     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
   }
 
-  fun String.getRefKey() = split("/").last()
+  fun String.getRefKey() = split("/").last().trim()
 
   fun String.convertToCamelCase(): String = sanitize().let { sanitized ->
     val words = splitIntoWords(sanitized)

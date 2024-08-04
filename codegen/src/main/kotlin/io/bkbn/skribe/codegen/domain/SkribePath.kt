@@ -10,6 +10,8 @@ data class SkribePath(
   val operation: Operation,
   val requestBody: SkribeRequest?,
   val responses: List<SkribeResponse>,
+  val pathParameters: List<SkribeParameter>,
+  val operationParameters: List<SkribeParameter>,
 ) {
 
   @JvmInline
