@@ -31,8 +31,31 @@ sourceSets {
 }
 
 skribe {
-  specUrl.set(file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString())
-  outputDir.set("$projectDir/src/main/gen")
-  basePackage.set("io.bkbn.sourdough.clients")
-  shouldCleanDir.set(true)
+  shouldCleanDir = true
+  outputDir = "$projectDir/src/main/gen"
+
+  api {
+    basePackage = "com.alpaca.broker.client"
+    specUrl = file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString()
+  }
+
+  api {
+    basePackage = "com.factset.price.client"
+    specUrl = file("../codegen/src/test/resources/factset-prices.yml").absoluteFile.toString()
+  }
 }
+//skribe {
+//  specUrl.set(file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString())
+//  outputDir.set("$projectDir/src/main/gen")
+//  basePackage.set("io.bkbn.sourdough.clients")
+//  shouldCleanDir.set(true)
+//}
+//skribe {
+//  shouldCleanDir = true
+//  outputDir = "$projectDir/src/main/gen"
+//
+//  api("alpaca-broker") {
+//    specUrl = file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString()
+//    basePackage = "io.bkbn.sourdough.clients"
+//  }
+//}
