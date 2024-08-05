@@ -9,3 +9,6 @@ build
 
 # Codegen Playground
 playground/src/main/gen
+
+# Dotenv
+.env

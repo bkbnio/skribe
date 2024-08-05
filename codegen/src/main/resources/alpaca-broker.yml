@@ -1353,7 +1353,6 @@ components:
           type: object
         addidional_information:
           type: string
-          required: false
     StreetAddress:
       type: string
       example: 20 N San Mateo Dr

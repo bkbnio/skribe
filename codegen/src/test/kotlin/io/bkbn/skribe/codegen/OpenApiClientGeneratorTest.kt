@@ -2,7 +2,6 @@ package io.bkbn.skribe.codegen
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.bkbn.skribe.codegen.generator.ApiClientGenerator
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.equals.shouldBeEqual
@@ -17,38 +16,45 @@ class OpenApiClientGeneratorTest : DescribeSpec({
   describe("Code Generation") {
     it("Can generate the client for the Neon API") {
       // Act
-      val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+      val files = Skribe.generate(getFileUrl("neon.json"), "tech.neon.client")
 
       // Assert
       files shouldHaveSize 188
     }
     it("Can generate the client for the Docker Engine API") {
       // Act
-      val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
+      val files = Skribe.generate(getFileUrl("docker.yml"), "com.docker.client")
 
       // Assert
       files shouldHaveSize 274
     }
     it("Can generate the client for the Alpaca Broker API") {
       // Act
-      val files = ApiClientGenerator.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
+      val files = Skribe.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
 
       // Assert
       files shouldHaveSize 181
     }
     it("Can generate the client for the FactSet Prices API") {
       // Act
-      val files = ApiClientGenerator.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
+      val files = Skribe.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
 
       // Assert
       files shouldHaveSize 93
+    }
+    it("Can generate the client for the FactSet Fundamentals API") {
+      // Act
+      val files = Skribe.generate(getFileUrl("factset-fundamentals.yml"), "com.factset.client")
+
+      // Assert
+      files shouldHaveSize 202
     }
   }
   describe("Code Compilation") {
     it("Can compile the client code for the Neon API") {
       // Arrange
       val tempDir = createTempDirectory()
-      val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+      val files = Skribe.generate(getFileUrl("neon.json"), "tech.neon.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {
@@ -67,7 +73,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
     it("Can compile the client code for the docker engine API") {
       // Arrange
       val tempDir = createTempDirectory()
-      val files = ApiClientGenerator.generate(getFileUrl("docker.yml"), "com.docker.client")
+      val files = Skribe.generate(getFileUrl("docker.yml"), "com.docker.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {
@@ -86,7 +92,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
     it("Can compile the client code for the FactSet Prices API") {
       // Arrange
       val tempDir = createTempDirectory()
-      val files = ApiClientGenerator.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
+      val files = Skribe.generate(getFileUrl("factset-prices.yml"), "com.factset.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {
@@ -105,7 +111,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
     it("Can compile the client code for the Alpaca Broker API") {
       // Arrange
       val tempDir = createTempDirectory()
-      val files = ApiClientGenerator.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
+      val files = Skribe.generate(getFileUrl("alpaca-broker.yml"), "com.alpaca.client")
       files.forEach { it.writeTo(tempDir) }
       val sourceFiles = tempDir.walk().filter { it.isRegularFile() }.map { SourceFile.fromPath(it.toFile()) }.toList()
       val compilation = KotlinCompilation().apply {
@@ -125,7 +131,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
   describe("Property Manipulation") {
     it("Can attach the proper annotations to a modified enum") {
       // Arrange
-      val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+      val files = Skribe.generate(getFileUrl("neon.json"), "tech.neon.client")
 
       // Act
       val content = files.find { it.name == "BranchState" }.toString().trim()
@@ -150,7 +156,7 @@ class OpenApiClientGeneratorTest : DescribeSpec({
   describe("Utility Generators") {
     it("Can generate the required serializers") {
       // Arrange
-      val files = ApiClientGenerator.generate(getFileUrl("neon.json"), "tech.neon.client")
+      val files = Skribe.generate(getFileUrl("neon.json"), "tech.neon.client")
 
       // Act
       val content = files.find { it.name == "Serializers" }.toString().trim()

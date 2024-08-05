@@ -16,8 +16,11 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
   implementation("io.ktor:ktor-client-core:$ktorVersion")
   implementation("io.ktor:ktor-client-cio:$ktorVersion")
+  implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+  implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
   implementation("com.benasher44:uuid:$uuidVersion")
+  implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 }
 
 sourceSets {
@@ -29,8 +32,21 @@ sourceSets {
 }
 
 skribe {
-  specUrl.set(file("../codegen/src/test/resources/factset-prices.yml").absoluteFile.toString())
-  outputDir.set("$projectDir/src/main/gen")
-  basePackage.set("io.bkbn.sourdough.clients")
-  shouldCleanDir.set(true)
+  shouldCleanDir = true
+  outputDir = "$projectDir/src/main/gen"
+
+  api {
+    basePackage = "com.alpaca.client.broker"
+    specUrl = file("../codegen/src/test/resources/alpaca-broker.yml").absoluteFile.toString()
+  }
+
+  api {
+    basePackage = "com.factset.client.prices"
+    specUrl = file("../codegen/src/test/resources/factset-prices.yml").absoluteFile.toString()
+  }
+
+  api {
+    basePackage = "com.factset.client.fundamentals"
+    specUrl = file("../codegen/src/test/resources/factset-fundamentals.yml").absoluteFile.toString()
+  }
 }
