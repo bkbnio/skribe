@@ -46,7 +46,7 @@ data object RequestGenerator : Generator {
           endControlFlow()
         }.build()
       )
-      description?.let { addKdoc(it) }
+      description?.let { addKdoc(it.replace("*", "")) }
       if (this@SkribePath.responses.isNotEmpty()) {
         addKdoc("\n\nResponses:\n")
       }

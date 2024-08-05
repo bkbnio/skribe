@@ -20,6 +20,7 @@ dependencies {
   implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
   implementation("com.benasher44:uuid:$uuidVersion")
+  implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 }
 
 sourceSets {

@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import io.bkbn.skribe.codegen.domain.SkribeSpec
+import io.bkbn.skribe.codegen.utils.StringUtils.convertToPascalCase
 import io.bkbn.skribe.codegen.utils.StringUtils.getRefKey
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -13,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 sealed interface SkribeSchema {
+  // TODO: Value class?
   val name: String
   val requiresSerialization: Boolean
 
@@ -21,6 +23,10 @@ sealed interface SkribeSchema {
 }
 
 sealed interface SkribeScalarSchema : SkribeSchema
+
+sealed interface SkribePotentiallyScalarSchema : SkribeSchema {
+  fun isScalar(): Boolean
+}
 
 sealed interface SerializableSchema {
   val utilPackage: String
@@ -47,7 +53,14 @@ data class SkribeArraySchema(
   override val name: String,
   override val requiresSerialization: Boolean = false,
   val items: SkribeSchema,
-) : SkribeSchema {
+) : SkribePotentiallyScalarSchema {
+
+  override fun isScalar(): Boolean {
+    if (items is SkribeScalarSchema) return true
+    if (items is SkribePotentiallyScalarSchema) return items.isScalar()
+    return false
+  }
+
   context(SkribeSpec)
   override fun toKotlinTypeName(): TypeName = List::class.asClassName().parameterizedBy(
     when (items.requiresSerialization) {
@@ -80,7 +93,8 @@ data class SkribeReferenceSchema(
   val ref: String,
 ) : SkribeSchema {
   context(SkribeSpec)
-  override fun toKotlinTypeName(): TypeName = ClassName(modelPackage, ref.getRefKey())
+  // TODO: Hacky w/ pascal crap
+  override fun toKotlinTypeName(): TypeName = ClassName(modelPackage, ref.getRefKey().convertToPascalCase())
 }
 
 data class SkribeDateSchema(
