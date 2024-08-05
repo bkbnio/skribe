@@ -42,6 +42,13 @@ class OpenApiClientGeneratorTest : DescribeSpec({
       // Assert
       files shouldHaveSize 93
     }
+    it("Can generate the client for the FactSet Fundamentals API") {
+      // Act
+      val files = Skribe.generate(getFileUrl("factset-fundamentals.yml"), "com.factset.client")
+
+      // Assert
+      files shouldHaveSize 202
+    }
   }
   describe("Code Compilation") {
     it("Can compile the client code for the Neon API") {

@@ -1,5 +1,5 @@
-import io.bkbn.sourdough.clients.model.Account
-import io.bkbn.sourdough.clients.request.getAllAccounts
+import com.alpaca.client.broker.model.Account
+import com.alpaca.client.broker.request.getAllAccounts
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO

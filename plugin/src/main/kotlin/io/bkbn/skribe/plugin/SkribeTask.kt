@@ -25,14 +25,15 @@ abstract class SkribeTask : DefaultTask() {
   fun generate() {
     val outputDirPath = Path.of(outputDir.get())
 
-//    if (shouldCleanDir.orNull == true) {
-//      logger.quiet("Cleaning directory recursively ${outputDir.get()}")
-//      outputDirPath.toFile().deleteRecursively()
-//    }
+    if (shouldCleanDir.orNull == true) {
+      logger.quiet("Cleaning directory recursively ${outputDir.get()}")
+      outputDirPath.toFile().deleteRecursively()
+    }
+
+    logger.quiet("Writing files to ${outputDir.get()}")
 
     apis.get().forEach { api ->
       val fileSpecs = Skribe.generate(api.specUrl, api.basePackage)
-      logger.quiet("Writing files to ${outputDir.get()}")
       fileSpecs.forEach { it.writeTo(outputDirPath) }
     }
 
